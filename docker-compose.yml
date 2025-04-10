@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  # backend:
+  #   build:
+  #     context: ./backend
+  #   container_name: earthquake-backend
+  #   ports:
+  #     - "8000:8000"
+  #   networks:
+  #     - app_network
+  #   environment:
+  #     - PROMETHEUS_URL=http://prometheus:9090
+  #   depends_on:
+  #     - prometheus
+
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #   container_name: earthquake-frontend
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - app_network
+  #   depends_on:
+  #     - backend
+
+  # simulation-ui:
+  #   build:
+  #     context: ./simulation-ui
+  #   container_name: simulation-ui
+  #   ports:
+  #     - "3001:3000"  # 前端內部用 3000，對外開 3001
+  #   networks:
+  #     - app_network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - app_network
+
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    ports:
+      - "4000:3000"  # 對外開 4000，避免與 React 前端的 3000 衝突
+    volumes:
+    - ./grafana/provisioning/:/etc/grafana/provisioning/
+    networks:
+      - app_network
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # 可改用 .env
+
+networks:
+  app_network:
+    driver: bridge
