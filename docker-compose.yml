@@ -1,38 +1,36 @@
 version: "3.8"
 
 services:
-  # backend:
-  #   build:
-  #     context: ./backend
-  #   container_name: earthquake-backend
-  #   ports:
-  #     - "8000:8000"
-  #   networks:
-  #     - app_network
-  #   environment:
-  #     - PROMETHEUS_URL=http://prometheus:9090
-  #   depends_on:
-  #     - prometheus
+  backend:
+    build:
+      context: ./backend
+    container_name: backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+    networks:
+      - app_network
+    depends_on:
+      - prometheus
 
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #   container_name: earthquake-frontend
-  #   ports:
-  #     - "3000:3000"
-  #   networks:
-  #     - app_network
-  #   depends_on:
-  #     - backend
-
-  # simulation-ui:
-  #   build:
-  #     context: ./simulation-ui
-  #   container_name: simulation-ui
-  #   ports:
-  #     - "3001:3000"  # 前端內部用 3000，對外開 3001
-  #   networks:
-  #     - app_network
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - app_network
+    depends_on:
+      - backend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
 
   prometheus:
     image: prom/prometheus:latest
