@@ -62,3 +62,6 @@ prometheus/queries.active
 # === OS ===
 ehthumbs.db
 Desktop.ini
+
+# === Dataabse ===
+db.sqlite3
