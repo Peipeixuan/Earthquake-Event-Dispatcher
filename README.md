@@ -1,14 +1,13 @@
 # Earthquake-Event-Dispatcher
 
-使用 Docker + docker-compose 整合多個開發模組，包括：
+使用 Docker + docker-compose 整合開發模組，包括：
 
-- FastAPI backend
-- React frontend
-- Simulation UI
-- Prometheus（資料收集）
-- Grafana（視覺化分析）
+- backend
+- frontend
+- prometheus
+- grafana
 
-目前已啟用 **Prometheus 與 Grafana**
+目前已啟用 **prometheus 與 grafana**
 
 ## Port 對應表
 
