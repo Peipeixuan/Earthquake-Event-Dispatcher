@@ -1,18 +1,46 @@
 version: "3.8"
 
 services:
-  # backend:
-  #   build:
-  #     context: ./backend
-  #   container_name: earthquake-backend
-  #   ports:
-  #     - "8000:8000"
-  #   networks:
-  #     - app_network
-  #   environment:
-  #     - PROMETHEUS_URL=http://prometheus:9090
-  #   depends_on:
-  #     - prometheus
+  backend:
+    build:
+      context: ./backend
+    container_name: earthquake-backend
+    ports:
+      - "8000:8000"
+    networks:
+      - app_network
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+      - prometheus
+
+  db:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: P@ssword
+      POSTGRES_DB: earthquake_db
+    ports:
+      - "5432:5432"
+    networks:
+      - app_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com  # Default login email
+      PGADMIN_DEFAULT_PASSWORD: admin          # Default login password
+    ports:
+      - "5050:80"  # Expose pgAdmin on port 5050
+    networks:
+      - app_network
 
   # frontend:
   #   build:
@@ -59,3 +87,6 @@ services:
 networks:
   app_network:
     driver: bridge
+
+volumes:
+  postgres_data:

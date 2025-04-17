@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最新地震報告</title>
+</head>
+
+<body>
+    <h1>最新地震報告：</h1>
+    {% if error %}
+    <p>{{ error }}</p>
+    {% else %}
+    <p><strong>地震編號：</strong>{{ earthquake_no }}</p>
+    <p><strong>報告內容：</strong>{{ report_content }}</p>
+    <p><strong>震央：</strong>{{ epicenter }} ({{ epicenter_latitude }}, {{ epicenter_longitude }})</p>
+    <p><strong>震級：</strong>{{ magnitude_type }}{{ magnitude_value }}</p>
+    <p><strong>日期：</strong>{{ date }} {{ time }}</p>
+    <p><strong>臺北市震度：</strong>{{ taipei }}</p>
+    <p><strong>臺中市震度：</strong>{{ taichung }}</p>
+    <p><strong>臺南市震度：</strong>{{ tainan }}</p>
+    <p><strong>臺東縣震度：</strong>{{ taitung }}</p>
+    <p><strong>報告圖片：</strong></p>
+    <img src="{{ report_image_uri }}" alt="報告圖片" style="max-width: 500px; height: auto;">
+    <p><strong>震度分布圖：</strong></p>
+    <img src="{{ shakemap_image_uri }}" alt="震度分布圖" style="max-width: 500px; height: auto;">
+    {% endif %}
+</body>
+
+</html>
