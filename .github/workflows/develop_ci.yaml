@@ -1,0 +1,36 @@
+name: CI - Check
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  docker-build:
+    name: Build Dockerfile(s)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build backend
+        working-directory: ./backend
+        run: |
+          if [ -f Dockerfile ]; then
+            docker build -t backend:test .
+          else
+            echo "No backend Dockerfile yet"
+          fi
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          if [ -f Dockerfile ]; then
+            docker build -t frontend:test .
+          else
+            echo "No frontend Dockerfile yet"
+          fi
+  
+	# backend-test
+	# frontend-test
