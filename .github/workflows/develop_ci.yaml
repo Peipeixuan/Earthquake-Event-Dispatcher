@@ -21,6 +21,7 @@ jobs:
             docker build -t backend:test .
           else
             echo "No backend Dockerfile yet"
+          fi
 
       - name: Build frontend
         working-directory: ./frontend
@@ -29,9 +30,12 @@ jobs:
             docker build -t frontend:test .
           else
             echo "No frontend Dockerfile yet"
+          fi
 
       # - name: Run backend tests
-      #   run: pytest backend/tests
+      #   working-directory: ./backend
+      #   run: pytest tests
 
       # - name: Run frontend tests
+      #   working-directory: ./frontend
       #   run: npm run test
