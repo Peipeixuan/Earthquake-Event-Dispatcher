@@ -8,9 +8,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
     environment:
       - PROMETHEUS_URL=http://prometheus:9090
+      - PYTHONUNBUFFERED=1
     networks:
       - app_network
     depends_on:
