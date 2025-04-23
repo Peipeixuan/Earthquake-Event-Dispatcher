@@ -95,21 +95,20 @@ def fetch_earthquake_data(request=None):
                             "area_intensity": area_intensity,
                         }
                     )
-                    logger.info(f"Earthquake event saved/updated: {event_id}")
 
-            # Return an HTTP response if accessed via a browser
+            # Render the earthquake_report.html template if accessed via a browser
             if request is not None:
-                return HttpResponse(f"Earthquake data processed: {earthquake_no}")
+                return render(request, "earthquake_report.html", earthquake_data)
 
         else:
             logger.info("No earthquake data available from the API.")
             if request is not None:
-                return HttpResponse("No earthquake data available from the API.")
+                return render(request, "earthquake_report.html", {"error": "No earthquake data available from the API."})
 
     else:
         logger.error(f"Failed to fetch data from the API. Status code: {response.status_code}")
         if request is not None:
-            return HttpResponse(f"Failed to fetch data from the API. Status code: {response.status_code}")
+            return render(request, "earthquake_report.html", {"error": f"Failed to fetch data from the API. Status code: {response.status_code}"})
 
     # If called by the scheduler, return nothing
     if request is None:
