@@ -8,13 +8,14 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
-    environment:
-      - PROMETHEUS_URL=http://prometheus:9090
+      - ./backend/app:/app/app
+    env_file:
+      - .env
     networks:
       - app_network
     depends_on:
       - prometheus
+      - mysql
 
   frontend:
     build:
@@ -29,8 +30,8 @@ services:
       - app_network
     depends_on:
       - backend
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+    env_file:
+      - .env
 
   prometheus:
     image: prom/prometheus:latest
@@ -46,14 +47,34 @@ services:
     image: grafana/grafana-oss
     container_name: grafana
     ports:
-      - "4000:3000"  # 對外開 4000，避免與 React 前端的 3000 衝突
+      - "3000:3000"
     volumes:
     - ./grafana/provisioning/:/etc/grafana/provisioning/
     networks:
       - app_network
+    env_file:
+      - .env
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin  # 可改用 .env
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - app_network
+
 
 networks:
   app_network:
     driver: bridge
+
+volumes:
+  mysql_data:
