@@ -2,25 +2,25 @@ from datetime import datetime, timedelta
 from app.db import get_mysql_connection
 
 location_suffix_map = {
-    "台北南港": "-tp",
+    "臺北南港": "-tp",
     "新竹寶山": "-hc",
-    "台中大雅": "-tc",
-    "台南善化": "-tn"
+    "臺中大雅": "-tc",
+    "臺南善化": "-tn"
 }
 
-def determine_level(magnitude_value, richter_scale):
-    if magnitude_value >= 3 or richter_scale >= 5:
+def determine_level(intensity, magnitude):
+    if intensity in ["3級", "4級", "5弱", "5強", "6弱", "6強", "7級"] or magnitude >= 5:
         return 'L2'
-    elif magnitude_value >= 1:
+    elif intensity in ["1級", "2級"]:
         return 'L1'
     else:
         return 'NA'
 
-def get_cooldown_minutes_from_db():
+def get_alert_suppress_time_from_db():
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT value FROM settings WHERE name = %s", ("cooldown_minutes",))
+            cursor.execute("SELECT value FROM settings WHERE name = %s", ("alert_suppress_time",))
             result = cursor.fetchone()
             if result:
                 return int(result["value"])
@@ -28,11 +28,9 @@ def get_cooldown_minutes_from_db():
     finally:
         conn.close()
 
-def process_earthquake_and_locations(req, cooldown_minutes=None):
-    if cooldown_minutes is None:
-        cooldown_minutes = get_cooldown_minutes_from_db()
-    
-    print("cooldown_minutes", cooldown_minutes)
+def process_earthquake_and_locations(req, alert_suppress_time=None):
+    if alert_suppress_time is None:
+        alert_suppress_time = get_alert_suppress_time_from_db()
 
     conn = get_mysql_connection()
     if conn:
@@ -40,29 +38,27 @@ def process_earthquake_and_locations(req, cooldown_minutes=None):
             with conn.cursor() as cursor:
                 # === Insert earthquake ===
                 eq = req.earthquake
-                origin_time_str = eq.origin_time
-                origin_time = datetime.strptime(origin_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
+                eq_time_str = eq.earthquake_time.replace("T", " ")
+                eq_time = datetime.strptime(eq_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
 
                 sql_insert_eq = """
-                INSERT INTO earthquake (id, origin_time, location, latitude, longitude, richter_scale, focal_depth, is_demo)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO earthquake (id, earthquake_time, center, magnitude, depth, is_demo)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 """
                 cursor.execute(sql_insert_eq, (
-                    eq.earthquake_id, origin_time_str, eq.location,
-                    eq.latitude, eq.longitude, eq.richter_scale,
-                    eq.focal_depth, eq.is_demo
+                    eq.earthquake_id, eq_time_str, eq.center, eq.magnitude, eq.depth, eq.is_demo
                 ))
 
                 # === Insert earthquake_location ===
                 sql_insert_loc = """
-                INSERT INTO earthquake_location (earthquake_id, location, magnitude_value)
+                INSERT INTO earthquake_location (earthquake_id, location, intensity)
                 VALUES (%s, %s, %s)
                 """
                 location_ids = []
 
                 for loc in req.locations:
-                    cursor.execute(sql_insert_loc, (eq.earthquake_id, loc.location, loc.magnitude_value))
-                    location_ids.append((loc.location, cursor.lastrowid, loc.magnitude_value))
+                    cursor.execute(sql_insert_loc, (eq.earthquake_id, loc.location, loc.intensity))
+                    location_ids.append((loc.location, cursor.lastrowid, loc.intensity))
 
                 # === Insert event for each location ===
                 sql_insert_event = """
@@ -70,7 +66,7 @@ def process_earthquake_and_locations(req, cooldown_minutes=None):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
 
-                for loc_name, location_eq_id, magnitude_value in location_ids:
+                for loc_name, location_eq_id, intensity in location_ids:
                     suffix = None
                     for keyword, sfx in location_suffix_map.items():
                         if keyword in loc_name:
@@ -79,17 +75,16 @@ def process_earthquake_and_locations(req, cooldown_minutes=None):
 
                     if suffix:
                         event_id = f"{eq.earthquake_id}{suffix}"
-                        level = determine_level(magnitude_value, eq.richter_scale)
+                        level = determine_level(intensity, eq.magnitude)
 
-                        # cooldown 基準改用 origin_time
-                        cooldown_threshold = (origin_time - timedelta(minutes=cooldown_minutes)).strftime("%Y-%m-%d %H:%M:%S")
+                        alert_suppress_threshold = (eq_time - timedelta(minutes=alert_suppress_time)).strftime("%Y-%m-%d %H:%M:%S")
                         
                         sql_check_alert = """
                         SELECT COUNT(*) as count FROM event
                         WHERE level = %s AND region = %s AND trigger_alert = 1 
                         AND create_at BETWEEN %s AND %s
                         """
-                        cursor.execute(sql_check_alert, (level, loc_name, cooldown_threshold, origin_time_str))
+                        cursor.execute(sql_check_alert, (level, loc_name, alert_suppress_threshold, eq_time_str))
                         result = cursor.fetchone()
                         existing_alert_count = result['count']
 
@@ -101,7 +96,7 @@ def process_earthquake_and_locations(req, cooldown_minutes=None):
                         cursor.execute(sql_insert_event, (
                             event_id,
                             location_eq_id,
-                            origin_time_str,
+                            eq_time_str,
                             loc_name,  # region 填入地點名稱
                             level,
                             trigger_alert,

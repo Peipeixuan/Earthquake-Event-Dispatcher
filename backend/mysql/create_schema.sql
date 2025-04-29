@@ -1,19 +1,17 @@
 CREATE TABLE IF NOT EXISTS earthquake (
     id INT PRIMARY KEY,
-    origin_time TIMESTAMP NOT NULL,     -- 發生日期時間
-    location VARCHAR(255),              -- 地點名稱
-    latitude FLOAT,                     -- 緯度
-    longitude FLOAT,                    -- 經度
-    richter_scale FLOAT,                -- 芮氏規模
-    focal_depth FLOAT,                  -- 震源深度（公里）
+    earthquake_time TIMESTAMP NOT NULL, -- 發生日期時間
+    center VARCHAR(255),                -- 地點名稱
+    magnitude FLOAT,                    -- 芮氏規模
+    depth FLOAT,                        -- 震源深度（公里）
     is_demo BOOLEAN                     -- 是否為 demo 地震（T/F）
 );
 
 CREATE TABLE IF NOT EXISTS earthquake_location (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    earthquake_id INT,                    -- 對應 earthquake.id
+    earthquake_id INT,                     -- 對應 earthquake.id
     location VARCHAR(255),                 -- 地點名稱
-    magnitude_value FLOAT,                 -- 各地震度值
+    intensity VARCHAR(20),                 -- 各地震度
     FOREIGN KEY (earthquake_id) REFERENCES earthquake(id)
 );
 
@@ -42,7 +40,6 @@ CREATE TABLE IF NOT EXISTS alert (
     FOREIGN KEY (event_id) REFERENCES event(id)
 );
 
--- cooldown_time
 CREATE TABLE IF NOT EXISTS settings (
     name VARCHAR(255) PRIMARY KEY,
     value VARCHAR(255)

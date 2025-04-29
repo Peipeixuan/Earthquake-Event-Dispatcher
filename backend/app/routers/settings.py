@@ -7,29 +7,29 @@ router = APIRouter(
     tags=["Settings"]
 )
 
-@router.post("/alert_cooldown")
-def set_alert_cooldown(cooldown_minutes: int = Query(..., description="設定警報抑制時間（單位：分鐘）")):
+@router.post("/alert_suppress")
+def set_alert_suppress_time(alert_suppress_time: int = Query(..., description="設定警報抑制時間（單位：分鐘）")):
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
             cursor.execute(
                 "REPLACE INTO settings (name, value) VALUES (%s, %s)",
-                ("cooldown_minutes", str(cooldown_minutes))
+                ("alert_suppress_time", str(alert_suppress_time))
             )
         conn.commit()
-        return {"message": "Cooldown time updated", "cooldown_minutes": cooldown_minutes}
+        return {"message": "alert suppress time updated", "alert_suppress_time": alert_suppress_time}
     finally:
         conn.close()
 
-@router.get("/alert_cooldown")
-def get_alert_cooldown():
+@router.get("/alert_suppress")
+def get_alert_suppress_time():
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT value FROM settings WHERE name = %s", ("cooldown_minutes",))
+            cursor.execute("SELECT value FROM settings WHERE name = %s", ("alert_suppress_time",))
             result = cursor.fetchone()
             if result:
-                return {"cooldown_minutes": int(result["value"])}
-            return {"cooldown_minutes": 30}  # fallback
+                return {"alert_suppress_time": int(result["value"])}
+            return {"alert_suppress_time": 30}  # fallback
     finally:
         conn.close()

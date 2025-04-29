@@ -3,17 +3,15 @@ from typing import List
 
 class EarthquakeIn(BaseModel):
     earthquake_id: int
-    origin_time: str
-    location: str
-    latitude: float
-    longitude: float
-    richter_scale: float
-    focal_depth: float
+    earthquake_time: str
+    center: str
+    magnitude: float
+    depth: float
     is_demo: bool
 
 class EarthquakeLocationIn(BaseModel):
     location: str
-    magnitude_value: float
+    intensity: str
 
 class EarthquakeIngestRequest(BaseModel):
     earthquake: EarthquakeIn
