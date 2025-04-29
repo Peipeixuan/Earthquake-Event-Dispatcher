@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.db import get_mysql_connection
 
 location_suffix_map = {
@@ -16,14 +16,32 @@ def determine_level(magnitude_value, richter_scale):
     else:
         return 'NA'
 
-def process_earthquake_and_locations(req):
+def get_cooldown_minutes_from_db():
+    conn = get_mysql_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT value FROM settings WHERE name = %s", ("cooldown_minutes",))
+            result = cursor.fetchone()
+            if result:
+                return int(result["value"])
+            return 30
+    finally:
+        conn.close()
+
+def process_earthquake_and_locations(req, cooldown_minutes=None):
+    if cooldown_minutes is None:
+        cooldown_minutes = get_cooldown_minutes_from_db()
+    
+    print("cooldown_minutes", cooldown_minutes)
+
     conn = get_mysql_connection()
     if conn:
         try:
             with conn.cursor() as cursor:
                 # === Insert earthquake ===
                 eq = req.earthquake
-                origin_time_str = eq.origin_time.replace("T", " ").replace("Z", "")
+                origin_time_str = eq.origin_time
+                origin_time = datetime.strptime(origin_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
 
                 sql_insert_eq = """
                 INSERT INTO earthquake (id, origin_time, location, latitude, longitude, richter_scale, focal_depth, is_demo)
@@ -40,19 +58,17 @@ def process_earthquake_and_locations(req):
                 INSERT INTO earthquake_location (earthquake_id, location, magnitude_value)
                 VALUES (%s, %s, %s)
                 """
-                location_ids = []  # 記錄下每一個 location_eq_id
+                location_ids = []
 
                 for loc in req.locations:
                     cursor.execute(sql_insert_loc, (eq.earthquake_id, loc.location, loc.magnitude_value))
-                    location_ids.append((loc.location, cursor.lastrowid, loc.magnitude_value))  # 抓剛插入的 id
+                    location_ids.append((loc.location, cursor.lastrowid, loc.magnitude_value))
 
                 # === Insert event for each location ===
                 sql_insert_event = """
                 INSERT INTO event (id, location_eq_id, create_at, region, level, trigger_alert, ack, is_damage, is_operation_active, is_done)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
-
-                now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
                 for loc_name, location_eq_id, magnitude_value in location_ids:
                     suffix = None
@@ -64,13 +80,29 @@ def process_earthquake_and_locations(req):
                     if suffix:
                         event_id = f"{eq.earthquake_id}{suffix}"
                         level = determine_level(magnitude_value, eq.richter_scale)
-                        trigger_alert = 1 if level in ['L1', 'L2'] else 0
 
+                        # cooldown 基準改用 origin_time
+                        cooldown_threshold = (origin_time - timedelta(minutes=cooldown_minutes)).strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        sql_check_alert = """
+                        SELECT COUNT(*) as count FROM event
+                        WHERE level = %s AND region = %s AND trigger_alert = 1 
+                        AND create_at BETWEEN %s AND %s
+                        """
+                        cursor.execute(sql_check_alert, (level, loc_name, cooldown_threshold, origin_time_str))
+                        result = cursor.fetchone()
+                        existing_alert_count = result['count']
+
+                        trigger_alert = 0
+                        if level in ['L1', 'L2'] and existing_alert_count == 0:
+                            trigger_alert = 1
+
+                        # 插入 event
                         cursor.execute(sql_insert_event, (
                             event_id,
                             location_eq_id,
-                            now,
-                            loc_name,            # region 暫時留空
+                            origin_time_str,
+                            loc_name,  # region 填入地點名稱
                             level,
                             trigger_alert,
                             0,  # ack

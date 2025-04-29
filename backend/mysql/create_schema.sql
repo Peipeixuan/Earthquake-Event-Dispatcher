@@ -41,3 +41,9 @@ CREATE TABLE IF NOT EXISTS alert (
     factory VARCHAR(255),                  -- 廠名
     FOREIGN KEY (event_id) REFERENCES event(id)
 );
+
+-- cooldown_time
+CREATE TABLE IF NOT EXISTS settings (
+    name VARCHAR(255) PRIMARY KEY,
+    value VARCHAR(255)
+);
