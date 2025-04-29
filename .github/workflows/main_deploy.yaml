@@ -23,4 +23,4 @@ jobs:
             cd /earthquake-event-dispatcher/Earthquake-Event-Dispatcher
             git pull origin main
             docker compose -f docker-compose.yml pull
-            docker compose -f docker-compose.yml --env-file .env.production up -d --build backend frontend prometheus grafana
+            docker compose -f docker-compose.yml up -d --build backend frontend prometheus grafana
