@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS event (
     is_done BOOLEAN,                      -- 是否處理完成（T/F）
     report_at TIMESTAMP NULL,             -- 回報時間
     closed_at TIMESTAMP NULL,             -- 確認修復完成時間
-    FOREIGN KEY (location_eq_id) REFERENCES earthquake(id)
+    FOREIGN KEY (location_eq_id) REFERENCES earthquake_location(id)
 );
 
 CREATE TABLE IF NOT EXISTS alert (
