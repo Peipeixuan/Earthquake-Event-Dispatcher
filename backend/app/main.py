@@ -2,9 +2,11 @@ from typing import Union
 from app.db import check_mysql_connection
 
 from fastapi import FastAPI
+from app.routers import earthquake
 
 app = FastAPI()
 
+app.include_router(earthquake.router)
 
 @app.get("/")
 def read_root():
