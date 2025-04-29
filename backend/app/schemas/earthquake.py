@@ -5,6 +5,8 @@ class EarthquakeIn(BaseModel):
     earthquake_id: int
     earthquake_time: str
     center: str
+    latitude: str
+    longitude: str
     magnitude: float
     depth: float
     is_demo: bool

@@ -42,11 +42,11 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                 eq_time = datetime.strptime(eq_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
 
                 sql_insert_eq = """
-                INSERT INTO earthquake (id, earthquake_time, center, magnitude, depth, is_demo)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO earthquake (id, earthquake_time, center, latitude, longitude, magnitude, depth, is_demo)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 cursor.execute(sql_insert_eq, (
-                    eq.earthquake_id, eq_time_str, eq.center, eq.magnitude, eq.depth, eq.is_demo
+                    eq.earthquake_id, eq_time_str, eq.center, eq.latitude, eq.longitude, eq.magnitude, eq.depth, eq.is_demo
                 ))
 
                 # === Insert earthquake_location ===
