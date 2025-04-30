@@ -1,7 +1,7 @@
 import React from "react";
 import EventCard from "../components/event-card";
 import Input from "../components/input";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import "../styles/alert-report.css";  // ✅ 引入你新增的樣式
 
 const mockData = {
