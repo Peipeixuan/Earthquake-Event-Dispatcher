@@ -1,0 +1,14 @@
+/* 自定義 scroll bar 樣式 */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #1A1B1F;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(40, 40, 43, 0.7);
+    border-radius: 4px;
+  }
+  
