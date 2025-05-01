@@ -16,6 +16,8 @@ services:
     depends_on:
       - prometheus
       - mysql
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
     build:
@@ -66,6 +68,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./backend/mysql/create_schema.sql:/docker-entrypoint-initdb.d/create_schema.sql
     ports:
       - "3306:3306"
     networks:

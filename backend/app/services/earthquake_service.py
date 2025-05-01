@@ -1,0 +1,116 @@
+from datetime import datetime, timedelta
+from app.db import get_mysql_connection
+
+location_suffix_map = {
+    "臺北南港": "-tp",
+    "新竹寶山": "-hc",
+    "臺中大雅": "-tc",
+    "臺南善化": "-tn"
+}
+
+def determine_level(intensity, magnitude):
+    if intensity in ["3級", "4級", "5弱", "5強", "6弱", "6強", "7級"] or magnitude >= 5:
+        return 'L2'
+    elif intensity in ["1級", "2級"]:
+        return 'L1'
+    else:
+        return 'NA'
+
+def get_alert_suppress_time_from_db():
+    conn = get_mysql_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT value FROM settings WHERE name = %s", ("alert_suppress_time",))
+            result = cursor.fetchone()
+            if result:
+                return int(result["value"])
+            return 30
+    finally:
+        conn.close()
+
+def process_earthquake_and_locations(req, alert_suppress_time=None):
+    if alert_suppress_time is None:
+        alert_suppress_time = get_alert_suppress_time_from_db()
+
+    conn = get_mysql_connection()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                # === Insert earthquake ===
+                eq = req.earthquake
+                eq_time_str = eq.earthquake_time.replace("T", " ")
+                eq_time = datetime.strptime(eq_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
+
+                sql_insert_eq = """
+                INSERT INTO earthquake (id, earthquake_time, center, latitude, longitude, magnitude, depth, is_demo)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(sql_insert_eq, (
+                    eq.earthquake_id, eq_time_str, eq.center, eq.latitude, eq.longitude, eq.magnitude, eq.depth, eq.is_demo
+                ))
+
+                # === Insert earthquake_location ===
+                sql_insert_loc = """
+                INSERT INTO earthquake_location (earthquake_id, location, intensity)
+                VALUES (%s, %s, %s)
+                """
+                location_ids = []
+
+                for loc in req.locations:
+                    cursor.execute(sql_insert_loc, (eq.earthquake_id, loc.location, loc.intensity))
+                    location_ids.append((loc.location, cursor.lastrowid, loc.intensity))
+
+                # === Insert event for each location ===
+                sql_insert_event = """
+                INSERT INTO event (id, location_eq_id, create_at, region, level, trigger_alert, ack, is_damage, is_operation_active, is_done)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+
+                for loc_name, location_eq_id, intensity in location_ids:
+                    suffix = None
+                    for keyword, sfx in location_suffix_map.items():
+                        if keyword in loc_name:
+                            suffix = sfx
+                            break
+
+                    if suffix:
+                        event_id = f"{eq.earthquake_id}{suffix}"
+                        level = determine_level(intensity, eq.magnitude)
+
+                        alert_suppress_threshold = (eq_time - timedelta(minutes=alert_suppress_time)).strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        sql_check_alert = """
+                        SELECT COUNT(*) as count FROM event
+                        WHERE level = %s AND region = %s AND trigger_alert = 1 
+                        AND create_at BETWEEN %s AND %s
+                        """
+                        cursor.execute(sql_check_alert, (level, loc_name, alert_suppress_threshold, eq_time_str))
+                        result = cursor.fetchone()
+                        existing_alert_count = result['count']
+
+                        trigger_alert = 0
+                        if level in ['L1', 'L2'] and existing_alert_count == 0:
+                            trigger_alert = 1
+
+                        # 插入 event
+                        cursor.execute(sql_insert_event, (
+                            event_id,
+                            location_eq_id,
+                            eq_time_str,
+                            loc_name,  # region 填入地點名稱
+                            level,
+                            trigger_alert,
+                            0,  # ack
+                            0,  # is_damage
+                            0,  # is_operation_active
+                            0   # is_done
+                        ))
+
+                conn.commit()
+                return True
+
+        except Exception as e:
+            print(f"[ERROR] Failed to insert earthquake and events: {e}")
+        finally:
+            conn.close()
+    return False
