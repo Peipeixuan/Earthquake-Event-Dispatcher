@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # TODO: 10sec for production
-UPDATE_INTERVAL = 5
+UPDATE_INTERVAL = 10
 API_KEY = os.getenv('API_KEY')
 if API_KEY == None:
     raise EnvironmentError('API_KEY not set')
@@ -121,11 +121,7 @@ def crawl_new_earthquakes() -> Earthquake:
     if len(earthquakes) == 0:
         return Earthquake()
 
-    for data in earthquakes:
-        parsed_earthquake = parse_earthquake(data)
-        print(parsed_earthquake)
-
-    return parsed_earthquake
+    return parse_earthquake(earthquakes)
 
 
 def update_new_data():
