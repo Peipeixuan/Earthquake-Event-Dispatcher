@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from app.db import get_mysql_connection
 
 location_suffix_map = {
@@ -96,7 +97,7 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                         cursor.execute(sql_insert_event, (
                             event_id,
                             location_eq_id,
-                            eq_time_str,
+                            datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S"),
                             loc_name,  # region 填入地點名稱
                             level,
                             trigger_alert,

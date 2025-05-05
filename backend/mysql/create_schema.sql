@@ -27,10 +27,11 @@ CREATE TABLE IF NOT EXISTS event (
     ack BOOLEAN,                          -- 是否接收ack（T/F）
     ack_time TIMESTAMP NULL,              -- 接收時間
     is_damage BOOLEAN,                    -- 是否損毀（T/F）
-    is_operation_active BOOLEAN,          -- 是否正在處理（T/F）
+    is_operation_active BOOLEAN,          -- 是否啟動戰情（T/F）
     is_done BOOLEAN,                      -- 是否處理完成（T/F）
     report_at TIMESTAMP NULL,             -- 回報時間
     closed_at TIMESTAMP NULL,             -- 確認修復完成時間
+    process_time INT NULL,                -- 處理時間(分鐘)
     FOREIGN KEY (location_eq_id) REFERENCES earthquake_location(id)
 );
 

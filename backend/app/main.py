@@ -7,13 +7,14 @@ from prometheus_client import make_asgi_app
 
 
 from fastapi import FastAPI
-from app.routers import earthquake, settings
+from app.routers import earthquake, settings, report
 
 
 app = FastAPI()
 
 app.include_router(earthquake.router)
 app.include_router(settings.router)
+app.include_router(report.router)
 
 @app.get("/")
 def read_root():
