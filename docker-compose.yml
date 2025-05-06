@@ -69,6 +69,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/mysql/create_schema.sql:/docker-entrypoint-initdb.d/create_schema.sql
+      - ./backend/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
     ports:
       - "3306:3306"
     networks:

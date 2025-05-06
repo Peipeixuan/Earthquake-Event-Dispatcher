@@ -23,4 +23,49 @@ jobs:
             cd /earthquake-event-dispatcher/Earthquake-Event-Dispatcher
             git pull origin main
             docker compose -f docker-compose.yml pull
-            docker compose -f docker-compose.yml up -d --no-deps --build backend frontend prometheus grafana
+            docker compose -f docker-compose.yml build --no-cache --force-rm
+            docker compose -f docker-compose.yml up -d --no-deps backend frontend prometheus grafana
+
+      - name: Wait for service to be ready
+        run: sleep 15
+      
+      # 使用 curl 檢查狀態碼是否為 200
+      - name: Backend - Health check - status code
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://34.81.36.176:8000/)
+          if [ "$STATUS" != "200" ]; then
+            echo "Backend 網站未正常回應，狀態碼: $STATUS"
+            exit 1
+          else
+            echo "Backend 正常回應"
+          fi
+
+      - name: Frontend - Health check - status code
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://34.81.36.176:5173/)
+          if [ "$STATUS" != "200" ]; then
+            echo "Frontend 未正常回應，狀態碼: $STATUS"
+            exit 1
+          else
+            echo "Frontend 正常回應"
+          fi
+      
+      - name: Prometheus - Health check - status code
+        run: |
+          STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" http://34.81.36.176:9090/)
+          if [ "$STATUS" != "200" ]; then
+            echo "Prometheus 未正常回應，狀態碼: $STATUS"
+            exit 1
+          else
+            echo "Prometheus 正常回應"
+          fi
+
+      - name: Grafana - Health check - status code
+        run: |
+          STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" http://34.81.36.176:3000/)
+          if [ "$STATUS" != "200" ]; then
+            echo "Grafana 未正常回應，狀態碼: $STATUS"
+            exit 1
+          else
+            echo "Grafana 正常回應"
+          fi
