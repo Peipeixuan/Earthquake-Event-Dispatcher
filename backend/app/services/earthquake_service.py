@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+
 from app.db import get_mysql_connection
 
 location_suffix_map = {
@@ -111,6 +112,8 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
 
         except Exception as e:
             print(f"[ERROR] Failed to insert earthquake and events: {e}")
+            conn.rollback()
+            return False
         finally:
             conn.close()
     return False
