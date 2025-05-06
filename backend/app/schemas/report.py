@@ -1,15 +1,21 @@
 from pydantic import BaseModel
 
-# report/acknowledge
+
 class AcknowledgeRequest(BaseModel):
+    """ report/acknowledge
+    """
     event_id: str
 
-# report/submit
+
 class SubmitReportRequest(BaseModel):
+    """ report/submit
+    """
     event_id: str
     damage: bool
     operation_active: bool
 
-# report/repair
+
 class RepairEventRequest(BaseModel):
+    """ report/repair
+    """
     event_id: str

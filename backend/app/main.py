@@ -1,15 +1,11 @@
-
-from typing import Union
 from app.db import check_mysql_connection
 from app.exporter import setup_exporter
 
 from prometheus_client import make_asgi_app
 
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import earthquake, settings, report
-
 
 app = FastAPI()
 
@@ -25,6 +21,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def read_root():

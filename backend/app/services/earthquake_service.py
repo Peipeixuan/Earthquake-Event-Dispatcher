@@ -9,6 +9,7 @@ location_suffix_map = {
     "臺南善化": "-tn"
 }
 
+
 def determine_level(intensity, magnitude):
     if intensity in ["3級", "4級", "5弱", "5強", "6弱", "6強", "7級"] or magnitude >= 5:
         return 'L2'
@@ -17,17 +18,20 @@ def determine_level(intensity, magnitude):
     else:
         return 'NA'
 
+
 def get_alert_suppress_time_from_db():
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT value FROM settings WHERE name = %s", ("alert_suppress_time",))
+            cursor.execute(
+                "SELECT value FROM settings WHERE name = %s", ("alert_suppress_time",))
             result = cursor.fetchone()
             if result:
                 return int(result["value"])
             return 30
     finally:
         conn.close()
+
 
 def process_earthquake_and_locations(req, alert_suppress_time=None):
     if alert_suppress_time is None:
@@ -40,7 +44,8 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                 # === Insert earthquake ===
                 eq = req.earthquake
                 eq_time_str = eq.earthquake_time.replace("T", " ")
-                eq_time = datetime.strptime(eq_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
+                eq_time = datetime.strptime(
+                    eq_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
 
                 sql_insert_eq = """
                 INSERT INTO earthquake (id, earthquake_time, center, latitude, longitude, magnitude, depth, is_demo)
@@ -58,8 +63,10 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                 location_ids = []
 
                 for loc in req.locations:
-                    cursor.execute(sql_insert_loc, (eq.earthquake_id, loc.location, loc.intensity))
-                    location_ids.append((loc.location, cursor.lastrowid, loc.intensity))
+                    cursor.execute(
+                        sql_insert_loc, (eq.earthquake_id, loc.location, loc.intensity))
+                    location_ids.append(
+                        (loc.location, cursor.lastrowid, loc.intensity))
 
                 # === Insert event for each location ===
                 sql_insert_event = """
@@ -78,14 +85,16 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                         event_id = f"{eq.earthquake_id}{suffix}"
                         level = determine_level(intensity, eq.magnitude)
 
-                        alert_suppress_threshold = (eq_time - timedelta(minutes=alert_suppress_time)).strftime("%Y-%m-%d %H:%M:%S")
-                        
+                        alert_suppress_threshold = (
+                            eq_time - timedelta(minutes=alert_suppress_time)).strftime("%Y-%m-%d %H:%M:%S")
+
                         sql_check_alert = """
                         SELECT COUNT(*) as count FROM event
                         WHERE level = %s AND region = %s AND trigger_alert = 1 
                         AND create_at BETWEEN %s AND %s
                         """
-                        cursor.execute(sql_check_alert, (level, loc_name, alert_suppress_threshold, eq_time_str))
+                        cursor.execute(
+                            sql_check_alert, (level, loc_name, alert_suppress_threshold, eq_time_str))
                         result = cursor.fetchone()
                         existing_alert_count = result['count']
 
@@ -97,7 +106,8 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                         cursor.execute(sql_insert_event, (
                             event_id,
                             location_eq_id,
-                            datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S"),
+                            datetime.now(ZoneInfo("Asia/Taipei")
+                                         ).strftime("%Y-%m-%d %H:%M:%S"),
                             loc_name,  # region 填入地點名稱
                             level,
                             trigger_alert,

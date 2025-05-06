@@ -7,6 +7,7 @@ router = APIRouter(
     tags=["Earthquake"]
 )
 
+
 @router.post("/simulate")
 def ingest_earthquake(req: EarthquakeIngestRequest):
     success = process_earthquake_and_locations(req)

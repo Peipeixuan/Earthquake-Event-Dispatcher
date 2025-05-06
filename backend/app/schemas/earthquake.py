@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 
+
 class EarthquakeIn(BaseModel):
     earthquake_id: int
     earthquake_time: str
@@ -11,9 +12,11 @@ class EarthquakeIn(BaseModel):
     depth: float
     is_demo: bool
 
+
 class EarthquakeLocationIn(BaseModel):
     location: str
     intensity: str
+
 
 class EarthquakeIngestRequest(BaseModel):
     earthquake: EarthquakeIn

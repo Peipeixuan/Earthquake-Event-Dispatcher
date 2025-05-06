@@ -4,9 +4,11 @@ from app.services.report_service import fetch_unacknowledged_events, acknowledge
 
 router = APIRouter(prefix="/report", tags=["report"])
 
+
 @router.get("/unacknowledged")
 def get_unacknowledged_events(location: str = Query(..., description="Taipei / Hsinchu / Taichung / Tainan / all")):
     return fetch_unacknowledged_events(location)
+
 
 @router.post("/acknowledge")
 def acknowledge_event(payload: AcknowledgeRequest):
@@ -15,12 +17,15 @@ def acknowledge_event(payload: AcknowledgeRequest):
         return {"message": f"Event {payload.event_id} acknowledged successfully"}
     raise HTTPException(status_code=404, detail="Event not found")
 
+
 @router.post("/submit")
 def submit_report(request: SubmitReportRequest):
-    success = update_event_status(request.event_id, request.damage, request.operation_active)
+    success = update_event_status(
+        request.event_id, request.damage, request.operation_active)
     if success:
         return {"message": "Event status updated"}
     raise HTTPException(status_code=404, detail="Event not found")
+
 
 @router.post("/repair")
 def repair_event(request: RepairEventRequest):

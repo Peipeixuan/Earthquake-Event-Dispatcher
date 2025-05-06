@@ -9,9 +9,11 @@ location_suffix_map = {
     "Tainan": "-tn"
 }
 
-# report/unacknowledged
-# Fetch unacknowledged events
+
 def fetch_unacknowledged_events(location: str):
+    """ report/unacknowledged
+    Fetch unacknowledged events
+    """
     suffix = location_suffix_map.get(location)
     if not suffix and location.lower() != "all":
         return {"message": "Invalid location"}
@@ -39,9 +41,11 @@ def fetch_unacknowledged_events(location: str):
     finally:
         conn.close()
 
-# report/acknowledge
-# Acknowledge event by ID
+
 def acknowledge_event_by_id(event_id: str) -> bool:
+    """ report/acknowledge
+    Acknowledge event by ID
+    """
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
@@ -64,9 +68,11 @@ def acknowledge_event_by_id(event_id: str) -> bool:
     finally:
         conn.close()
 
-# report/submit
-# Update event status
+
 def update_event_status(event_id: str, damage: bool, operation_active: bool):
+    """ report/submit
+    Update event status
+    """
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
@@ -80,7 +86,8 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
             cursor.execute(sql, (
                 damage,
                 operation_active,
-                datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S"),
+                datetime.now(ZoneInfo("Asia/Taipei")
+                             ).strftime("%Y-%m-%d %H:%M:%S"),
                 event_id
             ))
 
@@ -95,9 +102,11 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
     finally:
         conn.close()
 
-# report/repair
-# Repair event by ID
+
 def mark_event_as_repaired(event_id: str):
+    """ report/repair
+    Repair event by ID
+    """
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
@@ -113,13 +122,15 @@ def mark_event_as_repaired(event_id: str):
             """, (True, closed_str, event_id))
 
             # 查 create_at 並計算處理時間（分鐘）
-            cursor.execute("SELECT create_at FROM event WHERE id = %s", (event_id,))
+            cursor.execute(
+                "SELECT create_at FROM event WHERE id = %s", (event_id,))
             result = cursor.fetchone()
             print(result)
             if result:
                 create_at = result["create_at"]
                 create_at = create_at.replace(tzinfo=ZoneInfo("Asia/Taipei"))
-                process_minutes = int((closed_at - create_at).total_seconds() // 60)
+                process_minutes = int(
+                    (closed_at - create_at).total_seconds() // 60)
 
                 cursor.execute(
                     "UPDATE event SET process_time = %s WHERE id = %s",
