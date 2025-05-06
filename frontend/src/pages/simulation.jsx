@@ -2,6 +2,9 @@ import React from "react";
 import Input from "../components/input.jsx";
 import { useEffect, useState } from "react";
 import '../styles/simulation.css';
+import axiosInstance from '../axiosInstance';
+import { API_SIMULATE, API_ALERT_SUPPRESS } from "../globals/constants.js";
+import { state_longtitude_lantitude } from "../globals/geo.js";
 
 const data = [{
   date: "2025/04/20",
@@ -126,30 +129,6 @@ const data = [{
 ]
 
 
-const fetchEarthquakeData = () => {
-  return Promise.resolve([
-    {
-      date: "2025/04/20",
-      time: "17:00:20",
-      magnitude: 4,
-      depth: 30,
-      epicenter: "花蓮",
-      intensity: { 台北: 3, 新竹: 3, 台中: 2, 台南: 3 },
-    },
-    {
-      date: "2025/04/20",
-      time: "17:01:10",
-      magnitude: 1,
-      depth: 30,
-      epicenter: "花蓮",
-      intensity: { 台北: 0, 新竹: 1, 台中: 1, 台南: 1 },
-    },
-    // 你可以加更多 rows
-  ]);
-};
-
-
-
 const getIntensityColor = (value) => {
   if (value == '0級' || value == '1級') return "bg-emerald-700";
   if (value == '2級') return "bg-amber-600";
@@ -159,8 +138,133 @@ const getIntensityColor = (value) => {
 export default function Simulation() {
 
   const [hours, setHours] = useState(0);  // 小時
-  const [minutes, setMinutes] = useState(10);  // 分鐘
+  const [minutes, setMinutes] = useState(0);  // 分鐘
   const [seconds, setSeconds] = useState(0);  // 秒數
+
+  const [earthquakeData, setEarthquakeData] = useState({
+    earthquake_time: "2025-04-21T17:30:02",
+    magnitude: 5,
+    depth: 25,
+    center: "花蓮",
+    intensities: {
+      台北: "3級",
+      新竹: "2級",
+      台中: "4級",
+      台南: "5弱",
+    },
+  });
+
+  // 歷史模擬紀錄
+  const [simulateData, setSimulateData] = useState([]);
+
+  useEffect(() => {
+    // fetchSimulateData();
+    fetchSuppressData();
+  }, []);
+
+  // 獲取模擬數據
+  const fetchSimulateData = async () => {
+    try {
+      const response = await axiosInstance.get(API_SIMULATE); 
+      setSimulateData(response.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const fetchSuppressData = async () => {
+    try {
+      const response = await axiosInstance.get(API_ALERT_SUPPRESS); // GET 請求
+      console.log(response.data); 
+      const totalMins = response.data['alert_suppress_time'] || 0;
+      const hh = Math.floor(totalMins / 60);
+      const mm = totalMins % 60;
+      const ss = 0; // 假設秒數為 0
+      setHours(hh);
+      setMinutes(mm);
+      setSeconds(ss);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const handleEarthquakeChange = (field, value, city = null) => {
+    if (city) {
+      // Update intensity for a specific city
+      setEarthquakeData((prev) => ({
+        ...prev,
+        intensities: {
+          ...prev.intensities,
+          [city]: value,
+        },
+      }));
+    } else {
+      // Update other fields
+      setEarthquakeData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
+  };
+
+  const handleSubmitSimulate = async () => {
+    //TODO: 這裡的 payload  是實際 API 的要求，需要調整setEarthquakeData
+    const payload = {
+      "earthquake": {
+        "earthquake_id": 0,
+        "earthquake_time": "string",
+        "center": "string",
+        "latitude": "string",
+        "longitude": "string",
+        "magnitude": 0,
+        "depth": 0,
+        "is_demo": true
+      },
+      "locations": [
+        {
+          "location": "台北",
+          "intensity": "string"
+        },
+        {
+          "location": "新竹",
+          "intensity": "string"
+        },
+        {
+          "location": "台中",
+          "intensity": "string"
+        },
+        {
+          "location": "台南",
+          "intensity": "string"
+        }
+      ]
+    };
+  
+    try {
+      const response = await axiosInstance.post(API_SIMULATE, payload);
+      console.log("POST response:", response.data);
+      alert("模擬地震數據已成功提交！");
+    } catch (error) {
+      console.error("Error submitting data:", error);
+      alert("提交失敗，請稍後再試！");
+    }
+  };
+
+  const handleSubmitSuppress = async () => {
+    const totalMins = parseInt(hours) * 60 + parseInt(minutes);
+    const payload = {
+      'alert_suppress_time': totalMins
+    };
+  
+    try {
+      const response = await axiosInstance.post(API_ALERT_SUPPRESS, payload, { params: payload });
+      console.log("POST response:", response.data);
+      alert("抑制時間已成功提交！");
+    } catch (error) {
+      console.error("Error submitting data:", error);
+      alert("提交失敗，請稍後再試！");
+    }
+  };
 
   // 當用戶選擇小時、分鐘、秒數時更新狀態
   const handleChange = (type, value) => {
@@ -212,7 +316,7 @@ export default function Simulation() {
         ))}
       </select>
       </Input>
-      <button className="w-36 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded">送出</button>
+      <button onClick={handleSubmitSuppress} className="w-36 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded">送出</button>
 
       </section>
 
@@ -227,7 +331,8 @@ export default function Simulation() {
             <div className="relative flex items-center gap-1">
               <input
                 type="datetime-local"
-                defaultValue="2025-04-21T17:30:02"
+                value={earthquakeData.earthquake_time}
+                onChange={(e) => handleEarthquakeChange("earthquake_time", e.target.value)}
                 className="bg-transparent border-none text-white focus:ring-0 appearance-none pr-8 datetime-picker"
               />
               <div className="absolute right-2">
@@ -241,25 +346,23 @@ export default function Simulation() {
 
           <Input title="芮氏規模">
             <select
-                className="bg-transparent border-none text-white focus:ring-0"
-                defaultValue="5"
-              >                
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                
-              </select>
+              value={earthquakeData.magnitude}
+              onChange={(e) => handleEarthquakeChange("magnitude", e.target.value)}
+              className="bg-transparent border-none text-white focus:ring-0"
+            >
+              {[...Array(8).keys()].map((i) => (
+                <option key={i + 2} value={i + 2}>
+                  {i + 2}
+                </option>
+              ))}
+            </select>
           </Input>
           <Input title="深度">
             <div className="flex items-center gap-2">
               <input
                 type="number"
-                defaultValue="25"
+                value={earthquakeData.depth}
+                onChange={(e) => handleEarthquakeChange("depth", e.target.value)}
                 className="bg-transparent border-none text-white focus:ring-0 w-20"
               />
               <span className="text-blue-400 text-sm">km</span>
@@ -268,11 +371,12 @@ export default function Simulation() {
           <Input title="震央">
             <select
               className="bg-transparent border-none text-white focus:ring-0"
-              defaultValue="Hualien"
+              value={earthquakeData.center}
+              onChange={(e) => handleEarthquakeChange("center", e.target.value)}
             >
-              <option value="花蓮">花蓮</option>
-              <option value="台北">台北</option>
-              <option value="台南">台南</option>
+              {Object.keys(state_longtitude_lantitude).map(location => (
+                <option key={location} value={location}>{location}</option>
+              ))}
             </select>
           </Input>
         </div>
@@ -281,8 +385,9 @@ export default function Simulation() {
             <div key={city} className="flex space-x-2">
               <Input title={`${city}震度`}>
               <select
+                value={earthquakeData.intensities[city]}
+                onChange={(e) => handleEarthquakeChange("intensity", e.target.value, city)}
                 className="bg-transparent border-none text-white focus:ring-0"
-                defaultValue="3級"
               >
                 <option value="0級">0級</option>
                 <option value="1級">1級</option>
@@ -298,7 +403,7 @@ export default function Simulation() {
             </Input>
             </div>
           ))}
-          <button className="w-36 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded">送出</button>
+          <button className="w-36 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded" onClick={handleSubmitSimulate}>送出</button>
         </div>
         
       </section>

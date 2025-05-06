@@ -7,6 +7,7 @@ from prometheus_client import make_asgi_app
 
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.routers import earthquake, settings, report
 
 
@@ -15,6 +16,15 @@ app = FastAPI()
 app.include_router(earthquake.router)
 app.include_router(settings.router)
 app.include_router(report.router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    # allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root():
