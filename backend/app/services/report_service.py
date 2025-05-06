@@ -1,5 +1,6 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
 from app.db import get_mysql_connection
 
 location_suffix_map = {
@@ -116,6 +117,8 @@ def mark_event_as_repaired(event_id: str):
             cursor.execute("SELECT create_at FROM event WHERE id = %s", (event_id,))
             result = cursor.fetchone()
             print(result)
+            if not result:  # Add this check
+                return False
             if result:
                 create_at = result["create_at"]
                 create_at = create_at.replace(tzinfo=ZoneInfo("Asia/Taipei"))
