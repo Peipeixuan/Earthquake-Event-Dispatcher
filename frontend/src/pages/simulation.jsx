@@ -389,16 +389,16 @@ export default function Simulation() {
                 onChange={(e) => handleEarthquakeChange("intensity", e.target.value, city)}
                 className="bg-transparent border-none text-white focus:ring-0"
               >
-                <option value="0級">0級</option>
-                <option value="1級">1級</option>
-                <option value="2級">2級</option>
-                <option value="3級">3級</option>
-                <option value="4級">4級</option>
-                <option value="5弱">5弱</option>
-                <option value="5強">5強</option>
-                <option value="6弱">6弱</option>
-                <option value="6強">6強</option>
-                <option value="7級">7級</option>
+                <option value="0">0級</option>
+                <option value="1">1級</option>
+                <option value="2">2級</option>
+                <option value="3">3級</option>
+                <option value="4">4級</option>
+                <option value="5">5弱</option>
+                <option value="5.5">5強</option>
+                <option value="6">6弱</option>
+                <option value="6.5">6強</option>
+                <option value="7">7級</option>
               </select>
             </Input>
             </div>
@@ -414,24 +414,26 @@ export default function Simulation() {
         <div className="max-h-[500px] min-w-full">
           <table className="max-h-44 min-w-full text-sm border-separate border-spacing-y-1 text-left border border-neutral-900">
             <thead className="bg-neutral-800 w-full sticky block">
-              <tr>
+              <tr className="block">
+                <div className="flex min-w-full">
                 {["日期", "時間", "芮氏規模", "深度 (km)", "震央", "台北震度", "新竹震度", "台中震度", "台南震度"].map(header => (
-                  <th key={header} className="w-40 top-0 px-4 py-2 font-semibold text-sky-500 bg-neutral-800">{header}</th>
+                  <th key={header} className="w-1/6 top-0 px-4 py-2 font-semibold text-sky-500 bg-neutral-800">{header}</th>
                 ))}
+                </div>
               </tr>
             </thead>
             <tbody className="overflow-y-auto min-w-full block max-h-[400px]">
                 {data.map((row, idx) => (
-                <tr key={idx} className="bg-neutral-900 ">
-                  <td className="w-40 px-4 py-2">{row.date}</td>
-                  <td className="w-40 px-4 py-2">{row.time}</td>
-                  <td className="w-40 px-4 py-2">{row.magnitude}</td>
-                  <td className="w-40 px-4 py-2">{row.depth}</td>
-                  <td className="w-40 px-4 py-2">{row.epicenter}</td>
+                <tr key={idx} className="bg-neutral-900 flex">
+                  <td className="w-1/6 px-4 py-2">{row.date}</td>
+                  <td className="w-1/6 px-4 py-2">{row.time}</td>
+                  <td className="w-1/6 px-4 py-2">{row.magnitude}</td>
+                  <td className="w-1/6 px-4 py-2">{row.depth}</td>
+                  <td className="w-1/6 px-4 py-2">{row.epicenter}</td>
                   {Object.entries(row.intensity).map(([city, value]) => (
                     <td
                       key={city}
-                      className={`w-40 px-4 py-2 ${getIntensityColor(value)}`}
+                      className={`w-1/6 px-4 py-2 ${getIntensityColor(value)}`}
                     >
                       {value}
                     </td>
