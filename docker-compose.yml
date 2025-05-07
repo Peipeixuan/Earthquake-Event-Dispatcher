@@ -75,6 +75,16 @@ services:
     networks:
       - app_network
 
+  data-ingestion:
+    build:
+      context: ./data-ingestion
+    container_name: data-ingestion
+    env_file:
+      - .env
+    networks:
+      - app_network
+    depends_on:
+      - mysql
 
 networks:
   app_network:
