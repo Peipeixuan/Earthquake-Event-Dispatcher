@@ -111,10 +111,10 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                             loc_name,  # region 填入地點名稱
                             level,
                             trigger_alert,
-                            0,  # ack
-                            0,  # is_damage
-                            0,  # is_operation_active
-                            0   # is_done
+                            False,  # ack
+                            None,  # is_damage
+                            None,  # is_operation_active
+                            False   # is_done
                         ))
 
                 conn.commit()
