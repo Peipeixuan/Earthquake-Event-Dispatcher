@@ -3,7 +3,6 @@ from typing import List
 
 
 class EarthquakeIn(BaseModel):
-    earthquake_id: int
     earthquake_time: str
     center: str
     latitude: str

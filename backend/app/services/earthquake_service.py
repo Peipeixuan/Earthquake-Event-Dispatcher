@@ -32,6 +32,17 @@ def get_alert_suppress_time_from_db():
     finally:
         conn.close()
 
+def generate_simulated_earthquake_id(conn):
+    """
+    generate ID from 100,000,000
+    """
+    with conn.cursor() as cursor:
+        cursor.execute("""
+            SELECT MAX(id) as max_id FROM earthquake WHERE id >= 100000000
+        """)
+        result = cursor.fetchone()
+        max_sim_id = result['max_id'] or 100000000
+        return max_sim_id + 1
 
 def process_earthquake_and_locations(req, alert_suppress_time=None):
     if alert_suppress_time is None:
@@ -43,6 +54,10 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
             with conn.cursor() as cursor:
                 # === Insert earthquake ===
                 eq = req.earthquake
+
+                # generate id
+                earthquake_id = generate_simulated_earthquake_id(conn)
+
                 eq_time_str = eq.earthquake_time.replace("T", " ")
                 eq_time = datetime.strptime(
                     eq_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
@@ -52,7 +67,7 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 cursor.execute(sql_insert_eq, (
-                    eq.earthquake_id, eq_time_str, eq.center, eq.latitude, eq.longitude, eq.magnitude, eq.depth, eq.is_demo
+                    earthquake_id, eq_time_str, eq.center, eq.latitude, eq.longitude, eq.magnitude, eq.depth, eq.is_demo
                 ))
 
                 # === Insert earthquake_location ===
@@ -64,7 +79,7 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
 
                 for loc in req.locations:
                     cursor.execute(
-                        sql_insert_loc, (eq.earthquake_id, loc.location, loc.intensity))
+                        sql_insert_loc, (earthquake_id, loc.location, loc.intensity))
                     location_ids.append(
                         (loc.location, cursor.lastrowid, loc.intensity))
 
@@ -82,7 +97,7 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                             break
 
                     if suffix:
-                        event_id = f"{eq.earthquake_id}{suffix}"
+                        event_id = f"{earthquake_id}{suffix}"
                         level = determine_level(intensity, eq.magnitude)
 
                         alert_suppress_threshold = (

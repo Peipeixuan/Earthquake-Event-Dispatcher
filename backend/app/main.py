@@ -1,5 +1,5 @@
 from app.db import check_mysql_connection
-from app.exporter import setup_exporter
+# from app.exporter import setup_exporter
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.services.report_service import auto_close_unprocessed_events
 
@@ -39,6 +39,6 @@ def health_check():
     return {"mysql_connected": db_ok}
 
 
-setup_exporter()
-metrics_app = make_asgi_app()
-app.mount("/metrics", metrics_app)
+# setup_exporter()
+# metrics_app = make_asgi_app()
+# app.mount("/metrics", metrics_app)
