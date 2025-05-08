@@ -1,8 +1,10 @@
+from typing import Optional
 from pydantic import BaseModel
 from typing import List
 
 
 class EarthquakeIn(BaseModel):
+    earthquake_id: Optional[int] = None
     earthquake_time: str
     center: str
     latitude: str

@@ -222,7 +222,7 @@ def mark_event_as_repaired(event_id: str):
 
 def fetch_closed_events(location: str):
     """ report/closed
-    Fetch closed events with optional location filter
+    Fetch the 10 most recent closed events with optional location filter
     """
     suffix = location_suffix_map.get(location)
     if not suffix and location.lower() != "all":
@@ -240,11 +240,13 @@ def fetch_closed_events(location: str):
                 JOIN earthquake eq ON el.earthquake_id = eq.id
                 WHERE e.is_done = TRUE
             """
+            params = []
             if suffix:
                 sql += " AND e.id LIKE %s"
-                cursor.execute(sql, [f"%{suffix}"])
-            else:
-                cursor.execute(sql)
+                params.append(f"%{suffix}")
+
+            sql += " ORDER BY e.create_at DESC LIMIT 10"
+            cursor.execute(sql, params)
 
             rows = cursor.fetchall()
             for row in rows:

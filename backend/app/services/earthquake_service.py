@@ -56,7 +56,8 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                 eq = req.earthquake
 
                 # generate id
-                earthquake_id = generate_simulated_earthquake_id(conn)
+                if eq.earthquake_id is None:
+                    eq.earthquake_id = generate_simulated_earthquake_id(conn)
 
                 eq_time_str = eq.earthquake_time.replace("T", " ")
                 eq_time = datetime.strptime(
@@ -67,7 +68,7 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 cursor.execute(sql_insert_eq, (
-                    earthquake_id, eq_time_str, eq.center, eq.latitude, eq.longitude, eq.magnitude, eq.depth, eq.is_demo
+                    eq.earthquake_id, eq_time_str, eq.center, eq.latitude, eq.longitude, eq.magnitude, eq.depth, eq.is_demo
                 ))
 
                 # === Insert earthquake_location ===
@@ -79,7 +80,7 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
 
                 for loc in req.locations:
                     cursor.execute(
-                        sql_insert_loc, (earthquake_id, loc.location, loc.intensity))
+                        sql_insert_loc, (eq.earthquake_id, loc.location, loc.intensity))
                     location_ids.append(
                         (loc.location, cursor.lastrowid, loc.intensity))
 
@@ -97,7 +98,7 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                             break
 
                     if suffix:
-                        event_id = f"{earthquake_id}{suffix}"
+                        event_id = f"{eq.earthquake_id}{suffix}"
                         level = determine_level(intensity, eq.magnitude)
 
                         alert_suppress_threshold = (
