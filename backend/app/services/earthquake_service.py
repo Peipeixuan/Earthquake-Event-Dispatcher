@@ -104,18 +104,24 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                         alert_suppress_threshold = (
                             eq_time - timedelta(minutes=alert_suppress_time)).strftime("%Y-%m-%d %H:%M:%S")
 
+                        level_order = {"L1": 1, "L2": 2}
+                        this_level_score = level_order.get(level, 0)
+
+                        # 查詢 suppress 時間內、同地區發出的警報等級
                         sql_check_alert = """
-                        SELECT COUNT(*) as count FROM event
-                        WHERE level = %s AND region = %s AND trigger_alert = 1 
+                        SELECT level FROM event
+                        WHERE region = %s AND trigger_alert = 1
                         AND create_at BETWEEN %s AND %s
                         """
-                        cursor.execute(
-                            sql_check_alert, (level, loc_name, alert_suppress_threshold, eq_time_str))
-                        result = cursor.fetchone()
-                        existing_alert_count = result['count']
+                        cursor.execute(sql_check_alert, (loc_name, alert_suppress_threshold, eq_time_str))
+                        past_levels = cursor.fetchall()
 
+                        # 比較是否有等級 >= 本次的事件
+                        suppress = any(level_order.get(row["level"], 0) >= this_level_score for row in past_levels)
+
+                        # 決定是否觸發
                         trigger_alert = 0
-                        if level in ['L1', 'L2'] and existing_alert_count == 0:
+                        if level in ['L1', 'L2'] and not suppress:
                             trigger_alert = 1
 
                         # 插入 event
