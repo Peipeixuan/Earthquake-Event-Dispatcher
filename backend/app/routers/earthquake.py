@@ -1,6 +1,7 @@
 from fastapi import APIRouter
-from app.schemas.earthquake import EarthquakeIngestRequest
-from app.services.earthquake_service import process_earthquake_and_locations
+from typing import List
+from app.schemas.earthquake import EarthquakeIngestRequest, EarthquakeSimulationOut
+from app.services.earthquake_service import process_earthquake_and_locations, fetch_all_simulated_earthquakes
 
 router = APIRouter(
     prefix="/earthquake",
@@ -15,3 +16,8 @@ def ingest_earthquake(req: EarthquakeIngestRequest):
         return {"message": "Earthquake and locations ingested successfully"}
     else:
         return {"message": "Error occurred"}, 500
+
+
+@router.get("/simulation", response_model=List[EarthquakeSimulationOut])
+def get_simulated_earthquakes():
+    return fetch_all_simulated_earthquakes()

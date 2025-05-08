@@ -141,3 +141,40 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
         finally:
             conn.close()
     return False
+
+def fetch_all_simulated_earthquakes():
+    conn = get_mysql_connection()
+    try:
+        with conn.cursor() as cursor:
+            # 取出模擬地震
+            cursor.execute("""
+                SELECT * FROM earthquake
+                WHERE is_demo = TRUE
+                ORDER BY earthquake_time DESC
+            """)
+            earthquakes = cursor.fetchall()
+
+            result = []
+            for eq in earthquakes:
+                cursor.execute("""
+                    SELECT location, intensity
+                    FROM earthquake_location
+                    WHERE earthquake_id = %s
+                """, (eq["id"],))
+                locations = cursor.fetchall()
+
+                result.append({
+                    "earthquake": {
+                        "earthquake_time": eq["earthquake_time"].strftime("%Y-%m-%dT%H:%M:%S"),
+                        "center": eq["center"],
+                        "latitude": eq["latitude"],
+                        "longitude": eq["longitude"],
+                        "magnitude": eq["magnitude"],
+                        "depth": eq["depth"]
+                    },
+                    "locations": locations
+                })
+
+            return result
+    finally:
+        conn.close()
