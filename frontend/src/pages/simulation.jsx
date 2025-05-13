@@ -145,12 +145,14 @@ export default function Simulation() {
     earthquake_time: "2025-04-21T17:30:02",
     magnitude: 5,
     depth: 25,
-    center: "花蓮",
+    center: "花蓮縣",
+    longitude: state_longtitude_lantitude["花蓮縣"][0],
+    latitude: state_longtitude_lantitude["花蓮縣"][1],
     intensities: {
       台北: "3級",
       新竹: "2級",
       台中: "4級",
-      台南: "5弱",
+      台南: "5級",
     },
   });
 
@@ -158,7 +160,7 @@ export default function Simulation() {
   const [simulateData, setSimulateData] = useState([]);
 
   useEffect(() => {
-    // fetchSimulateData();
+    fetchSimulateData();
     fetchSuppressData();
   }, []);
 
@@ -190,7 +192,7 @@ export default function Simulation() {
 
   const handleEarthquakeChange = (field, value, city = null) => {
     if (city) {
-      // Update intensity for a specific city
+      // 更新 intensities 裡對應城市的震度
       setEarthquakeData((prev) => ({
         ...prev,
         intensities: {
@@ -198,8 +200,17 @@ export default function Simulation() {
           [city]: value,
         },
       }));
+    } else if (field === "center") {
+      // 同時更新 center、latitude、longitude
+      const [longitude, latitude] = state_longtitude_lantitude[value] || [null, null];
+      setEarthquakeData((prev) => ({
+        ...prev,
+        center: value,
+        longitude,
+        latitude,
+      }));
     } else {
-      // Update other fields
+      // 一般欄位更新（例如：earthquake_time, magnitude, depth）
       setEarthquakeData((prev) => ({
         ...prev,
         [field]: value,
@@ -208,37 +219,27 @@ export default function Simulation() {
   };
 
   const handleSubmitSimulate = async () => {
-    //TODO: 這裡的 payload  是實際 API 的要求，需要調整setEarthquakeData
+    const { earthquake_time, magnitude, depth, center, latitude, longitude, intensities } = earthquakeData;
+  
     const payload = {
-      "earthquake": {
-        "earthquake_id": 0,
-        "earthquake_time": "string",
-        "center": "string",
-        "latitude": "string",
-        "longitude": "string",
-        "magnitude": 0,
-        "depth": 0,
-        "is_demo": true
+      earthquake: {
+        earthquake_id: 0, 
+        earthquake_time,
+        center,
+        latitude: latitude?.toString() || "",
+        longitude: longitude?.toString() || "",
+        magnitude: magnitude.toString(),
+        depth: depth.toString(),    
+        is_demo: true,
       },
-      "locations": [
-        {
-          "location": "台北",
-          "intensity": "string"
-        },
-        {
-          "location": "新竹",
-          "intensity": "string"
-        },
-        {
-          "location": "台中",
-          "intensity": "string"
-        },
-        {
-          "location": "台南",
-          "intensity": "string"
-        }
-      ]
+      locations: Object.entries(intensities).map(([location, intensity]) => ({
+        location,
+        intensity: intensity.replace("級", ""),
+      })),
     };
+
+    console.log("Payload:", payload);
+    console.log("axios baseURL:", axiosInstance.defaults.baseURL);
   
     try {
       const response = await axiosInstance.post(API_SIMULATE, payload);
