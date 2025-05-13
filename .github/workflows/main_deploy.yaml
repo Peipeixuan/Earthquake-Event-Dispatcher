@@ -34,7 +34,7 @@ jobs:
       # 使用 curl 檢查狀態碼是否為 200
       - name: Backend - Health check - status code
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://34.81.36.176:8000/)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://34.81.36.176/api/)
           if [ "$STATUS" != "200" ]; then
             echo "Backend 網站未正常回應，狀態碼: $STATUS"
             exit 1
@@ -44,7 +44,7 @@ jobs:
 
       - name: Frontend - Health check - status code
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://34.81.36.176:5173/)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://34.81.36.176/simulation)
           if [ "$STATUS" != "200" ]; then
             echo "Frontend 未正常回應，狀態碼: $STATUS"
             exit 1
@@ -54,7 +54,7 @@ jobs:
       
       - name: Prometheus - Health check - status code
         run: |
-          STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" http://34.81.36.176:9090/)
+          STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" http://34.81.36.176/prometheus/query)
           if [ "$STATUS" != "200" ]; then
             echo "Prometheus 未正常回應，狀態碼: $STATUS"
             exit 1
@@ -64,7 +64,7 @@ jobs:
 
       - name: Grafana - Health check - status code
         run: |
-          STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" http://34.81.36.176:3000/)
+          STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" http://34.81.36.176/grafana/)
           if [ "$STATUS" != "200" ]; then
             echo "Grafana 未正常回應，狀態碼: $STATUS"
             exit 1
