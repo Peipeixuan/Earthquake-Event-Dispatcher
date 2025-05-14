@@ -15,6 +15,18 @@ services:
       - prometheus
       - grafana
       - data-ingestion
+  
+  nginx_exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx_exporter
+    ports:
+      - "9113:9113"
+    networks:
+      - app_network
+    depends_on:
+      - nginx
+    environment:
+      - NGINX_STATUS_URL=http://nginx:80/nginx_status  # Nginx status URL
 
   backend:
     build:

@@ -26,7 +26,7 @@ jobs:
             git reset --hard origin/main
             docker compose -f docker-compose.yml pull
             docker compose -f docker-compose.yml build --no-cache --force-rm
-            docker compose -f docker-compose.yml up -d --no-deps backend frontend prometheus grafana data-ingestion nginx
+            docker compose -f docker-compose.yml up -d --no-deps backend frontend prometheus grafana data-ingestion nginx nginx_exporter
 
       - name: Wait for service to be ready
         run: sleep 15
