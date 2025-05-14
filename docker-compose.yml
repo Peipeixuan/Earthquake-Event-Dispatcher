@@ -1,6 +1,21 @@
-version: "3.8"
 
 services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - app_network
+    depends_on:
+      - frontend
+      - backend
+      - prometheus
+      - grafana
+      - data-ingestion
+
   backend:
     build:
       context: ./backend
@@ -27,7 +42,7 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - node_modules:/app/node_modules
     networks:
       - app_network
     depends_on:
@@ -38,8 +53,6 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     networks:
@@ -75,6 +88,16 @@ services:
     networks:
       - app_network
 
+  data-ingestion:
+    build:
+      context: ./data-ingestion
+    container_name: data-ingestion
+    env_file:
+      - .env
+    networks:
+      - app_network
+    depends_on:
+      - mysql
 
 networks:
   app_network:
@@ -82,3 +105,4 @@ networks:
 
 volumes:
   mysql_data:
+  node_modules:

@@ -8,8 +8,12 @@ from prometheus_client import Gauge
 import requests
 import os
 
+import logging
+
 from dotenv import load_dotenv
 load_dotenv()
+
+logger = logging.getLogger('uvicorn')
 
 # TODO: 10sec for production
 UPDATE_INTERVAL = 10
@@ -114,14 +118,14 @@ def crawl_new_earthquakes() -> Earthquake:
     })
 
     if res.status_code != 200:
-        print('API error')
+        logger.error('API error')
         exit(1)
 
     earthquakes = res.json()['records']['Earthquake']
     if len(earthquakes) == 0:
         return Earthquake()
 
-    return parse_earthquake(earthquakes)
+    return parse_earthquake(earthquakes[0])
 
 
 def update_new_data():
@@ -129,7 +133,9 @@ def update_new_data():
 
     # TODO: batch update
     if data.earthquake_id != last_earthquake.earthquake_id:
+        logger.info('Crawled new earthquake -- updating')
         update_metric(data)
+        logger.info('Updated')
 
     my_scheduler.enter(UPDATE_INTERVAL, 1, update_new_data)
 

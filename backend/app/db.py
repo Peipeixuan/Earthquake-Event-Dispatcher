@@ -2,6 +2,7 @@ import os
 import pymysql
 from pymysql.err import OperationalError
 
+
 def get_mysql_connection():
     try:
         conn = pymysql.connect(
@@ -16,6 +17,7 @@ def get_mysql_connection():
     except OperationalError as e:
         print(f"MySQL connection error: {e}")
         return None
+
 
 def check_mysql_connection():
     conn = get_mysql_connection()
