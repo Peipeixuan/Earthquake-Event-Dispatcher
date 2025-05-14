@@ -3,143 +3,143 @@ import Input from "../components/input.jsx";
 import { useEffect, useState } from "react";
 import '../styles/simulation.css';
 import axiosInstance from '../axiosInstance';
-import { API_SIMULATE, API_ALERT_SUPPRESS } from "../globals/constants.js";
+import { API_SIMULATE, API_ALERT_SUPPRESS, API_SIMULATE_GET } from "../globals/constants.js";
 import { state_longtitude_lantitude } from "../globals/geo.js";
 
-const data = [{
-  date: "2025/04/20",
-  time: "17:00:20",
-  magnitude: 4,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '2級', 台中: '3級', 台南: '4級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-},
-{
-  date: "2025/04/20",
-  time: "17:01:10",
-  magnitude: 1,
-  depth: 30,
-  epicenter: "花蓮",
-  intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-}
-]
+// const data = [{
+//   date: "2025/04/20",
+//   time: "17:00:20",
+//   magnitude: 4,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '2級', 台中: '3級', 台南: '4級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// },
+// {
+//   date: "2025/04/20",
+//   time: "17:01:10",
+//   magnitude: 1,
+//   depth: 30,
+//   epicenter: "花蓮",
+//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
+// }
+// ]
 
 
 const getIntensityColor = (value) => {
-  if (value == '0級' || value == '1級') return "bg-emerald-700";
-  if (value == '2級') return "bg-amber-600";
+  if (value == '0' || value == '1') return "bg-emerald-700";
+  if (value == '2') return "bg-amber-600";
   return "bg-red-800";
 };
 
 export default function Simulation() {
 
-  const [hours, setHours] = useState(0);  // 小時
-  const [minutes, setMinutes] = useState(0);  // 分鐘
-  const [seconds, setSeconds] = useState(0);  // 秒數
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [seconds, setSeconds] = useState(0);
 
   const [earthquakeData, setEarthquakeData] = useState({
     earthquake_time: "2025-04-21T17:30:02",
@@ -167,7 +167,8 @@ export default function Simulation() {
   // 獲取模擬數據
   const fetchSimulateData = async () => {
     try {
-      const response = await axiosInstance.get(API_SIMULATE); 
+      const response = await axiosInstance.get(API_SIMULATE_GET); 
+      console.log("取得模擬資料：", response.data);
       setSimulateData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -176,7 +177,7 @@ export default function Simulation() {
 
   const fetchSuppressData = async () => {
     try {
-      const response = await axiosInstance.get(API_ALERT_SUPPRESS); // GET 請求
+      const response = await axiosInstance.get(API_ALERT_SUPPRESS);
       console.log(response.data); 
       const totalMins = response.data['alert_suppress_time'] || 0;
       const hh = Math.floor(totalMins / 60);
@@ -223,13 +224,13 @@ export default function Simulation() {
   
     const payload = {
       earthquake: {
-        earthquake_id: 0, 
+        // earthquake_id: 0, 
         earthquake_time,
         center,
         latitude: latitude?.toString() || "",
         longitude: longitude?.toString() || "",
-        magnitude: magnitude.toString(),
-        depth: depth.toString(),    
+        magnitude: parseFloat(magnitude),
+        depth: parseFloat(depth),    
         is_demo: true,
       },
       locations: Object.entries(intensities).map(([location, intensity]) => ({
@@ -238,13 +239,14 @@ export default function Simulation() {
       })),
     };
 
-    console.log("Payload:", payload);
+    console.log("Final Payload:", JSON.stringify(payload, null, 2));
     console.log("axios baseURL:", axiosInstance.defaults.baseURL);
   
     try {
       const response = await axiosInstance.post(API_SIMULATE, payload);
       console.log("POST response:", response.data);
       alert("模擬地震數據已成功提交！");
+      await fetchSimulateData();
     } catch (error) {
       console.error("Error submitting data:", error);
       alert("提交失敗，請稍後再試！");
@@ -417,32 +419,38 @@ export default function Simulation() {
             <thead className="bg-neutral-800 w-full sticky block">
               <tr className="block">
                 <div className="flex min-w-full">
-                {["日期", "時間", "芮氏規模", "深度 (km)", "震央", "台北震度", "新竹震度", "台中震度", "台南震度"].map(header => (
+                {["時間", "芮氏規模", "深度 (km)", "震央", "台北震度", "新竹震度", "台中震度", "台南震度"].map(header => (
                   <th key={header} className="w-1/6 top-0 px-4 py-2 font-semibold text-sky-500 bg-neutral-800">{header}</th>
                 ))}
                 </div>
               </tr>
             </thead>
             <tbody className="overflow-y-auto min-w-full block max-h-[400px]">
-                {data.map((row, idx) => (
-                <tr key={idx} className="bg-neutral-900 flex">
-                  <td className="w-1/6 px-4 py-2">{row.date}</td>
-                  <td className="w-1/6 px-4 py-2">{row.time}</td>
-                  <td className="w-1/6 px-4 py-2">{row.magnitude}</td>
-                  <td className="w-1/6 px-4 py-2">{row.depth}</td>
-                  <td className="w-1/6 px-4 py-2">{row.epicenter}</td>
-                  {Object.entries(row.intensity).map(([city, value]) => (
-                    <td
-                      key={city}
-                      className={`w-1/6 px-4 py-2 ${getIntensityColor(value)}`}
-                    >
-                      {value}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {simulateData.map((row, idx) => {
+                const { earthquake, locations } = row;
+                const intensityMap = {};
+                locations.forEach(({ location, intensity }) => {
+                  intensityMap[location] = intensity;
+                });
+
+                return (
+                  <tr key={idx} className="bg-neutral-900 flex">
+                    <td className="w-1/6 px-4 py-2">{earthquake.earthquake_time}</td>
+                    <td className="w-1/6 px-4 py-2">{earthquake.magnitude}</td>
+                    <td className="w-1/6 px-4 py-2">{earthquake.depth}</td>
+                    <td className="w-1/6 px-4 py-2">{earthquake.center}</td>
+                    {["台北", "新竹", "台中", "台南"].map((city) => (
+                      <td
+                        key={city}
+                        className={`w-1/6 px-4 py-2 ${getIntensityColor(intensityMap[city] || "0")}`}
+                      >
+                        {intensityMap[city] || "0"}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
-            
           </table>
         </div>
       </section>
