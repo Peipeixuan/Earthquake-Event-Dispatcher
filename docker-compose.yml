@@ -14,7 +14,7 @@ services:
       - backend
       - prometheus
       - grafana
-      - data-ingestion
+      - data_ingestion
   
   nginx_exporter:
     image: nginx/nginx-prometheus-exporter:latest
@@ -103,10 +103,10 @@ services:
     networks:
       - app_network
 
-  data-ingestion:
+  data_ingestion:
     build:
-      context: ./data-ingestion
-    container_name: data-ingestion
+      context: ./data_ingestion
+    container_name: data_ingestion
     env_file:
       - .env
     networks:
