@@ -27,7 +27,7 @@ def fetch_unacknowledged_events(location: str):
                 FROM event e
                 JOIN earthquake_location el ON e.location_eq_id = el.id
                 JOIN earthquake eq ON el.earthquake_id = eq.id
-                WHERE e.ack = FALSE
+                WHERE e.ack = FALSE AND e.is_done = FALSE
             """
             if suffix:
                 sql += " AND e.id LIKE %s"
@@ -83,7 +83,7 @@ def fetch_acknowledged_events(location: str):
                 FROM event e
                 JOIN earthquake_location el ON e.location_eq_id = el.id
                 JOIN earthquake eq ON el.earthquake_id = eq.id
-                WHERE e.ack = TRUE AND e.is_damage IS NULL
+                WHERE e.ack = TRUE AND e.is_damage IS NULL AND e.is_done = FALSE
             """
             if suffix:
                 sql += " AND e.id LIKE %s"
@@ -261,22 +261,44 @@ def auto_close_unprocessed_events():
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
-            print('hi')
             # 台灣現在時間
             now = datetime.now(ZoneInfo("Asia/Taipei"))
-            one_hour_ago = now - timedelta(hours=1)
+            one_hour_ago = now - timedelta(minutes=1)
 
-            # 找出條件符合的 event
-            sql_select = """
+            # 條件 1
+            sql1 = """
                 SELECT id FROM event
-                WHERE ack = TRUE
-                  AND is_damage = TRUE
-                  AND is_done = FALSE
+                WHERE ack_time IS NULL
                   AND create_at <= %s
+                  AND closed_at IS NULL
             """
-            cursor.execute(sql_select, (one_hour_ago.strftime("%Y-%m-%d %H:%M:%S"),))
-            to_close = cursor.fetchall()
-            
+            cursor.execute(sql1, (one_hour_ago.strftime("%Y-%m-%d %H:%M:%S"),))
+            to_close_1 = cursor.fetchall()
+
+            # 條件 2
+            sql2 = """
+                SELECT id FROM event
+                WHERE report_at IS NULL
+                  AND ack_time IS NOT NULL
+                  AND ack_time <= %s
+                  AND closed_at IS NULL
+            """
+            cursor.execute(sql2, (one_hour_ago.strftime("%Y-%m-%d %H:%M:%S"),))
+            to_close_2 = cursor.fetchall()
+
+            # 條件 3
+            sql3 = """
+                SELECT id FROM event
+                WHERE report_at IS NOT NULL
+                  AND report_at <= %s
+                  AND closed_at IS NULL
+            """
+            cursor.execute(sql3, (one_hour_ago.strftime("%Y-%m-%d %H:%M:%S"),))
+            to_close_3 = cursor.fetchall()
+
+            to_close = list(to_close_1) + list(to_close_2) + list(to_close_3)
+            print(to_close)
+
             for row in to_close:
                 event_id = row['id']
                 sql_update = """
