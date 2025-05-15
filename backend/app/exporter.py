@@ -1,27 +1,20 @@
-from dataclasses import dataclass, field
+from ast import parse
+from calendar import c
 import sched
 from datetime import datetime
 import threading
 import time
 from typing import Dict
 from prometheus_client import Gauge
-import requests
-import os
+from pydantic import BaseModel
 
 import logging
 
-from dotenv import load_dotenv
-load_dotenv()
+from app.db import get_mysql_connection
 
 logger = logging.getLogger('uvicorn')
 
-# TODO: 10sec for production
-UPDATE_INTERVAL = 10
-API_KEY = os.getenv('API_KEY')
-if API_KEY == None:
-    raise EnvironmentError('API_KEY not set')
-# 顯著有感地震報告資料-顯著有感地震報告
-URL = 'https://opendata.cwa.gov.tw/api//v1/rest/datastore/E-A0015-001'
+UPDATE_INTERVAL = 3
 
 earthquake_time = Gauge(
     'earthquake_time', 'Unix timestamp of the last earthquake')
@@ -37,7 +30,7 @@ earthquake_intensity = Gauge(
     'earthquake_intensity', 'Intensity of the last earthquake by location', ['location'])
 
 
-def intensity_to_int(intensity: str):
+def intensity_str_to_float(intensity: str):
     return {
         '0級': 0,
         '1級': 1,
@@ -45,29 +38,21 @@ def intensity_to_int(intensity: str):
         '3級': 3,
         '4級': 4,
         '5弱': 5,
-        '5強': 5,
+        '5強': 5.5,
         '6弱': 6,
-        '6強': 6,
+        '6強': 6.5,
         '7級': 7,
     }[intensity]
 
 
-@dataclass
-class Earthquake:
+class Earthquake(BaseModel):
     earthquake_id: int = 0
-    timestamp: int = field(
-        default_factory=lambda: int(datetime.now().timestamp()))
-    scale: float = 6.4
-    depth: float = 30
-    longitude: float = 122.4
-    latitude: float = 22.5
-    intensity: Dict[str, int] = field(
-        default_factory=lambda: {
-            'Taipei': 0,
-            'Hsinchu': 0,
-            'Taichung': 0,
-            'Tainan': 0
-        })
+    timestamp: int = 0  # Unix timestamp
+    scale: float = 0.0
+    depth: float = 0.0
+    longitude: float = 0.0
+    latitude: float = 0.0
+    intensity: Dict[str, float] = {}
 
 
 last_earthquake = Earthquake()
@@ -81,61 +66,54 @@ def update_metric(data: Earthquake):
     earthquake_longitude.set(data.longitude)
     earthquake_latitude.set(data.latitude)
 
-    for location, intensity in data.intensity.items():
-        earthquake_intensity.labels(location=location).set(intensity)
+    for location in ["臺北南港", "新竹寶山", "臺中大雅", "臺南善化"]:
+        earthquake_intensity.labels(location=location).set(
+            data.intensity.get(location, '0'))
 
 
-def parse_earthquake(data) -> Earthquake:
+def parse_earthquake(result) -> Earthquake:
     parsed_earthquake = Earthquake(
-        earthquake_id=data['EarthquakeNo'],
-        timestamp=int(datetime.strptime(data['EarthquakeInfo']
-                                        ['OriginTime'], '%Y-%m-%d %H:%M:%S').timestamp()),
-        scale=data['EarthquakeInfo']['EarthquakeMagnitude']['MagnitudeValue'],
-        depth=data['EarthquakeInfo']['FocalDepth'],
-        longitude=data['EarthquakeInfo']['Epicenter']['EpicenterLongitude'],
-        latitude=data['EarthquakeInfo']['Epicenter']['EpicenterLatitude'],
+        earthquake_id=result['id'],
+        timestamp=int(result['earthquake_time'].timestamp()),
+        scale=result['magnitude'],
+        depth=result['depth'],
+        longitude=result['longitude'],
+        latitude=result['latitude'],
     )
-
-    for area in data['Intensity']['ShakingArea']:
-        areaNameMapper = {
-            '臺北市': 'Taipei',
-            '新竹市': 'Hsinchu',
-            '臺中市': 'Taichung',
-            '臺南市': 'Tainan'
-        }
-        for name, code in areaNameMapper.items():
-            # TODO: refactor this when wake up
-            if name in area['CountyName']:
-                parsed_earthquake.intensity[code] = intensity_to_int(
-                    area['AreaIntensity'])
     return parsed_earthquake
 
 
-def crawl_new_earthquakes() -> Earthquake:
-    res = requests.get(URL, {
-        'Authorization': API_KEY,
-        'limit': 1,
-    })
-
-    if res.status_code != 200:
-        logger.error('API error')
-        exit(1)
-
-    earthquakes = res.json()['records']['Earthquake']
-    if len(earthquakes) == 0:
-        return Earthquake()
-
-    return parse_earthquake(earthquakes[0])
-
-
 def update_new_data():
-    data = crawl_new_earthquakes()
+    conn = get_mysql_connection()
+    if conn is None:
+        logger.error('MySQL connection error')
+        my_scheduler.enter(UPDATE_INTERVAL, 1, update_new_data)
+        return
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM earthquake ORDER BY earthquake_time DESC LIMIT 1")
+            result = cursor.fetchone()
 
-    # TODO: batch update
-    if data.earthquake_id != last_earthquake.earthquake_id:
-        logger.info('Crawled new earthquake -- updating')
-        update_metric(data)
-        logger.info('Updated')
+            if result:
+                earthquake = parse_earthquake(result)
+
+                for area in ["臺北南港", "新竹寶山", "臺中大雅", "臺南善化"]:
+                    cursor.execute(
+                        "SELECT intensity FROM earthquake_location WHERE earthquake_id = %s AND location = %s",
+                        (earthquake.earthquake_id, area))
+                    result = cursor.fetchone()
+                    if result:
+                        earthquake.intensity[area] = intensity_str_to_float(
+                            result["intensity"])
+
+                if earthquake.earthquake_id != last_earthquake.earthquake_id:
+                    update_metric(earthquake)
+    except Exception as e:
+        logger.error(f"Error fetching last earthquake: {e}")
+        return
+    finally:
+        conn.close()
 
     my_scheduler.enter(UPDATE_INTERVAL, 1, update_new_data)
 
