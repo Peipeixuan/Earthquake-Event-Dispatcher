@@ -32,6 +32,7 @@ def get_alert_suppress_time_from_db():
     finally:
         conn.close()
 
+
 def generate_simulated_earthquake_id(conn):
     """
     generate ID from 100,000,000
@@ -43,6 +44,7 @@ def generate_simulated_earthquake_id(conn):
         result = cursor.fetchone()
         max_sim_id = result['max_id'] or 100000000
         return max_sim_id + 1
+
 
 def process_earthquake_and_locations(req, alert_suppress_time=None):
     if alert_suppress_time is None:
@@ -113,11 +115,13 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                         WHERE region = %s AND trigger_alert = 1
                         AND create_at BETWEEN %s AND %s
                         """
-                        cursor.execute(sql_check_alert, (loc_name, alert_suppress_threshold, eq_time_str))
+                        cursor.execute(
+                            sql_check_alert, (loc_name, alert_suppress_threshold, eq_time_str))
                         past_levels = cursor.fetchall()
 
                         # 比較是否有等級 >= 本次的事件
-                        suppress = any(level_order.get(row["level"], 0) >= this_level_score for row in past_levels)
+                        suppress = any(level_order.get(
+                            row["level"], 0) >= this_level_score for row in past_levels)
 
                         # 決定是否觸發
                         trigger_alert = 0
@@ -147,6 +151,7 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
         finally:
             conn.close()
     return False
+
 
 def fetch_all_simulated_earthquakes():
     conn = get_mysql_connection()

@@ -30,15 +30,18 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(auto_close_unprocessed_events, 'interval', minutes=1)
 scheduler.start()
 
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
+
 @app.get("/health",
-    description="沒有綁到 nginx，要從 8000 Port 才能看")
+         description="沒有綁到 nginx，要從 8000 Port 才能看")
 def health_check():
     db_ok = check_mysql_connection()
     return {"mysql_connected": db_ok}
+
 
 setup_exporter()
 metrics_app = make_asgi_app()

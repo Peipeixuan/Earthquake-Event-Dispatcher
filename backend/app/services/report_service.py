@@ -66,6 +66,7 @@ def acknowledge_event_by_id(event_id: str) -> bool:
     finally:
         conn.close()
 
+
 def fetch_acknowledged_events(location: str):
     """ report/acknowledged
     Fetch acknowledged events
@@ -95,6 +96,7 @@ def fetch_acknowledged_events(location: str):
     finally:
         conn.close()
 
+
 def update_event_status(event_id: str, damage: bool, operation_active: bool):
     """ report/submit
     Update event status
@@ -113,7 +115,8 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
                 print(result)
                 if result:
                     create_at = result["create_at"]
-                    create_at = create_at.replace(tzinfo=ZoneInfo("Asia/Taipei"))
+                    create_at = create_at.replace(
+                        tzinfo=ZoneInfo("Asia/Taipei"))
                     process_minutes = int(
                         (now - create_at).total_seconds() // 60)
 
@@ -127,7 +130,8 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
                         process_time = %s
                     WHERE id = %s
                 """
-                cursor.execute(sql, (damage, operation_active, now_str, now_str, process_minutes, event_id))
+                cursor.execute(sql, (damage, operation_active,
+                               now_str, now_str, process_minutes, event_id))
             else:
                 sql = """
                     UPDATE event
@@ -136,7 +140,8 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
                         report_at = %s
                     WHERE id = %s
                 """
-                cursor.execute(sql, (damage, operation_active, now_str, event_id))
+                cursor.execute(
+                    sql, (damage, operation_active, now_str, event_id))
 
             if cursor.rowcount == 0:
                 return False
@@ -148,6 +153,7 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
         return False
     finally:
         conn.close()
+
 
 def fetch_in_process_events(location: str):
     """ report/in_process
@@ -177,6 +183,7 @@ def fetch_in_process_events(location: str):
             return cursor.fetchall()
     finally:
         conn.close()
+
 
 def mark_event_as_repaired(event_id: str):
     """ report/repair
@@ -220,6 +227,7 @@ def mark_event_as_repaired(event_id: str):
     finally:
         conn.close()
 
+
 def fetch_closed_events(location: str):
     """ report/closed
     Fetch the 10 most recent closed events with optional location filter
@@ -256,6 +264,7 @@ def fetch_closed_events(location: str):
 
     finally:
         conn.close()
+
 
 def auto_close_unprocessed_events():
     conn = get_mysql_connection()
