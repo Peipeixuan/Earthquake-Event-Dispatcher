@@ -9,9 +9,10 @@ from prometheus_client import make_asgi_app
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import earthquake, settings, report
+from backend.app.constants import DEBUG_MODE
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG if DEBUG_MODE else logging.INFO,
     # Docker logs already include timestamp
     format="%(name)s - %(levelname)s - %(message)s",
 )

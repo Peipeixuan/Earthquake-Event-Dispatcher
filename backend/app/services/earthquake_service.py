@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 import logging
+from unittest.mock import DEFAULT
 from zoneinfo import ZoneInfo
 from app.db import get_mysql_connection
+from backend.app.constants import DEFAULT_ALERT_SUPPRESS
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ def get_alert_suppress_time_from_db():
             result = cursor.fetchone()
             if result:
                 return int(result["value"])
-            return 30
+            return DEFAULT_ALERT_SUPPRESS
     finally:
         conn.close()
 
