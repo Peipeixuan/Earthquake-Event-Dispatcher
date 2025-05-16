@@ -16,10 +16,7 @@ logging.basicConfig(
     format="%(name)s - %(levelname)s - %(message)s",
 )
 
-api_router = APIRouter(prefix="/api")
-
 app = FastAPI()
-app.include_router(api_router)
 app.include_router(earthquake.router)
 app.include_router(settings.router)
 app.include_router(report.router)
