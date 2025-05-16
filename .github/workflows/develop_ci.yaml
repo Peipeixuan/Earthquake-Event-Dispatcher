@@ -32,11 +32,11 @@ jobs:
             echo "No frontend Dockerfile yet"
           fi
 
-      - name: Build data-ingestion
-        working-directory: ./data-ingestion
+      - name: Build data_ingestion
+        working-directory: ./data_ingestion
         run: |
           if [ -f Dockerfile ]; then
-            docker build -t data-ingestion:test .
+            docker build -t data_ingestion:test .
           else
             echo "No data ingestion Dockerfile yet"
           fi
