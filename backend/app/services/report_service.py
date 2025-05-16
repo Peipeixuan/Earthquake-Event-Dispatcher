@@ -19,9 +19,13 @@ def fetch_unacknowledged_events(location: str):
     """
     suffix = location_suffix_map.get(location)
     if not suffix and location.lower() != "all":
-        return {"message": "Invalid location"}
+        # TODO: indicate in return code
+        return []
 
     conn = get_mysql_connection()
+    if not conn:
+        # TODO indicate in return code
+        return []
     try:
         with conn.cursor() as cursor:
             sql = """
@@ -48,6 +52,8 @@ def acknowledge_event_by_id(event_id: str) -> bool:
     Acknowledge event by ID
     """
     conn = get_mysql_connection()
+    if not conn:
+        return False
     try:
         with conn.cursor() as cursor:
             # 先檢查事件是否存在
@@ -76,7 +82,8 @@ def fetch_acknowledged_events(location: str):
     """
     suffix = location_suffix_map.get(location)
     if not suffix and location.lower() != "all":
-        return {"message": "Invalid location"}
+        # TODO: indicate in return code
+        return []
 
     conn = get_mysql_connection()
     try:
@@ -105,6 +112,8 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
     Update event status
     """
     conn = get_mysql_connection()
+    if not conn:
+        return False
     try:
         with conn.cursor() as cursor:
             now = datetime.now(ZoneInfo("Asia/Taipei"))
@@ -164,9 +173,12 @@ def fetch_in_process_events(location: str):
     """
     suffix = location_suffix_map.get(location)
     if not suffix and location.lower() != "all":
-        return {"message": "Invalid location"}
+        # TODO: indicate in return code
+        return []
 
     conn = get_mysql_connection()
+    if not conn:
+        return []
     try:
         with conn.cursor() as cursor:
             sql = """
@@ -193,6 +205,8 @@ def mark_event_as_repaired(event_id: str):
     Repair event by ID
     """
     conn = get_mysql_connection()
+    if not conn:
+        return False
     try:
         with conn.cursor() as cursor:
             closed_at = datetime.now(ZoneInfo("Asia/Taipei"))
@@ -237,8 +251,11 @@ def fetch_closed_events(location: str):
     """
     suffix = location_suffix_map.get(location)
     if not suffix and location.lower() != "all":
-        return {"message": "Invalid location"}
+        # TODO: indicate in return code
+        return []
 
+    if not conn:
+        return []
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
@@ -251,7 +268,7 @@ def fetch_closed_events(location: str):
                 JOIN earthquake eq ON el.earthquake_id = eq.id
                 WHERE e.is_done = TRUE
             """
-            params = []
+            params: list[str] = []
             if suffix:
                 sql += " AND e.id LIKE %s"
                 params.append(f"%{suffix}")
@@ -271,6 +288,8 @@ def fetch_closed_events(location: str):
 
 def auto_close_unprocessed_events():
     conn = get_mysql_connection()
+    if not conn:
+        return 0
     try:
         with conn.cursor() as cursor:
             # 台灣現在時間
