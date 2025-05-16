@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
+import logging
 from zoneinfo import ZoneInfo
 from app.db import get_mysql_connection
+
+logger = logging.getLogger(__name__)
 
 location_suffix_map = {
     "臺北南港": "-tp",
@@ -147,7 +150,7 @@ def process_earthquake_and_locations(req, alert_suppress_time=None):
                 return True
 
         except Exception as e:
-            print(f"[ERROR] Failed to insert earthquake and events: {e}")
+            logger.exception(f"Failed to insert earthquake and events")
         finally:
             conn.close()
     return False

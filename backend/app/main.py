@@ -1,3 +1,4 @@
+import logging
 from app.db import check_mysql_connection
 from app.exporter import setup_exporter
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -8,6 +9,12 @@ from prometheus_client import make_asgi_app
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import earthquake, settings, report
+
+logging.basicConfig(
+    level=logging.INFO,
+    # Docker logs already include timestamp
+    format="%(name)s - %(levelname)s - %(message)s",
+)
 
 api_router = APIRouter(prefix="/api")
 

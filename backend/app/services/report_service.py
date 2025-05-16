@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
+import logging
 from zoneinfo import ZoneInfo
 from app.db import get_mysql_connection
+
+logger = logging.getLogger(__name__)
 
 location_suffix_map = {
     "Taipei": "-tp",
@@ -61,7 +64,7 @@ def acknowledge_event_by_id(event_id: str) -> bool:
             conn.commit()
             return True
     except Exception as e:
-        print(f"[ERROR] Acknowledge event failed: {e}")
+        logger.exception(f"Acknowledge event failed")
         return False
     finally:
         conn.close()
@@ -112,7 +115,7 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
                 cursor.execute(
                     "SELECT create_at FROM event WHERE id = %s", (event_id,))
                 result = cursor.fetchone()
-                print(result)
+                logger.debug(f"Fetching event {event_id} returns: {result}")
                 if result:
                     create_at = result["create_at"]
                     create_at = create_at.replace(
@@ -149,7 +152,7 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
         conn.commit()
         return True
     except Exception as e:
-        print(f"[ERROR] Failed to update event status: {e}")
+        logger.exception("Failed to update event status")
         return False
     finally:
         conn.close()
@@ -207,7 +210,7 @@ def mark_event_as_repaired(event_id: str):
             cursor.execute(
                 "SELECT create_at FROM event WHERE id = %s", (event_id,))
             result = cursor.fetchone()
-            print(result)
+            logger.debug(f"Fetching event {event_id} returns: {result}")
             if result:
                 create_at = result["create_at"]
                 create_at = create_at.replace(tzinfo=ZoneInfo("Asia/Taipei"))
@@ -222,7 +225,7 @@ def mark_event_as_repaired(event_id: str):
         conn.commit()
         return True
     except Exception as e:
-        print(f"[ERROR] Failed to mark event as repaired: {e}")
+        logger.exception("Failed to mark event as repaired")
         return False
     finally:
         conn.close()
@@ -306,7 +309,7 @@ def auto_close_unprocessed_events():
             to_close_3 = cursor.fetchall()
 
             to_close = list(to_close_1) + list(to_close_2) + list(to_close_3)
-            print(to_close)
+            logger.info(f"Auto-close events: {to_close}")
 
             for row in to_close:
                 event_id = row['id']
@@ -324,10 +327,10 @@ def auto_close_unprocessed_events():
                 ))
 
         conn.commit()
-        print(f"[INFO] Auto-closed {len(to_close)}")
+        logger.info(f"Auto-closed {len(to_close)} events successfully")
         return len(to_close)
     except Exception as e:
-        print(f"[ERROR] Failed to auto-close events: {e}")
+        logger.exception("Failed to auto-close events")
         return 0
     finally:
         conn.close()
