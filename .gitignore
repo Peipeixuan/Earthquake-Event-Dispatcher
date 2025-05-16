@@ -52,9 +52,11 @@ grafana/grafana.db
 grafana/logs/
 
 # === Prometheus (data) ===
-prometheus/data/
-prometheus/wal/
-prometheus/queries.active
+**/prometheus/data/
+**/prometheus/wal/
+**/prometheus/queries.active
+prometheus/tmp/prometheus/
+!.prometheus/tmp/prometheus/.gitkeep
 
 # === VS Code / JetBrains editors ===
 .vscode/
