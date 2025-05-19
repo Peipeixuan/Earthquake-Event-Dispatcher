@@ -6,8 +6,8 @@ from zoneinfo import ZoneInfo
 
 from pymysql import Connection
 from app.db import get_mysql_connection
-from backend.app.constants import DEFAULT_ALERT_SUPPRESS
-from backend.app.schemas.earthquake import EarthquakeIngestRequest
+from app.constants import DEFAULT_ALERT_SUPPRESS
+from app.schemas.earthquake import EarthquakeIngestRequest
 
 logger = logging.getLogger(__name__)
 
