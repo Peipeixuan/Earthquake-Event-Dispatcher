@@ -80,7 +80,7 @@ location_suffix_map = {
 }
 
 
-def determine_level(intensity: str, magnitude: int) -> str:
+def determine_level(intensity: str, magnitude: float) -> str:
     if intensity in ["3級", "4級", "5弱", "5強", "6弱", "6強", "7級"] or magnitude >= 5:
         return 'L2'
     elif intensity in ["1級", "2級"]:
