@@ -3,10 +3,10 @@ from zoneinfo import ZoneInfo
 from app.db import get_mysql_connection
 
 location_suffix_map = {
-    "臺北南港": "-tp",
-    "新竹寶山": "-hc",
-    "臺中大雅": "-tc",
-    "臺南善化": "-tn"
+    "臺北": "-tp",
+    "新竹": "-hc",
+    "臺中": "-tc",
+    "臺南": "-tn"
 }
 
 
