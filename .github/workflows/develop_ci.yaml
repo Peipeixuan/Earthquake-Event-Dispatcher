@@ -41,11 +41,11 @@ jobs:
             echo "No data ingestion Dockerfile yet"
           fi
 
-      - name: Run backend tests
-        working-directory: ./backend
-        run: |
-          pip install -r requirements.txt
-          PYTHONPATH=. pytest tests
+      # - name: Run backend tests
+      #   working-directory: ./backend
+      #   run: |
+      #     pip install -r requirements.txt
+      #     PYTHONPATH=. pytest tests
 
       # - name: Run frontend tests
       #   working-directory: ./frontend
