@@ -45,7 +45,7 @@ jobs:
         working-directory: ./backend
         run: |
           pip install pytest
-          pytest tests
+          PYTHONPATH=. pytest tests
 
       # - name: Run frontend tests
       #   working-directory: ./frontend
