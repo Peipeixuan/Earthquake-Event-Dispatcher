@@ -41,9 +41,9 @@ jobs:
             echo "No data ingestion Dockerfile yet"
           fi
 
-      # - name: Run backend tests
-      #   working-directory: ./backend
-      #   run: pytest tests
+      - name: Run backend tests
+        working-directory: ./backend
+        run: pytest tests
 
       # - name: Run frontend tests
       #   working-directory: ./frontend
