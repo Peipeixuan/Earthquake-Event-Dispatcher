@@ -13,9 +13,11 @@ class EarthquakeIn(BaseModel):
     depth: float
     is_demo: bool
 
+
 class EarthquakeLocationIn(BaseModel):
     location: str
     intensity: str
+
 
 class EarthquakeIngestRequest(BaseModel):
     earthquake: EarthquakeIn
@@ -30,9 +32,11 @@ class EarthquakeBaseOut(BaseModel):
     magnitude: float
     depth: float
 
+
 class EarthquakeLocationOut(BaseModel):
     location: str
     intensity: str
+
 
 class EarthquakeSimulationOut(BaseModel):
     earthquake: EarthquakeBaseOut

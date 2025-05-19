@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query
 from app.db import get_mysql_connection
+from backend.app.constants import DEFAULT_ALERT_SUPPRESS
 
 router = APIRouter(
     prefix="/settings",
@@ -32,6 +33,6 @@ def get_alert_suppress_time():
             result = cursor.fetchone()
             if result:
                 return {"alert_suppress_time": int(result["value"])}
-            return {"alert_suppress_time": 30}  # fallback
+            return {"alert_suppress_time": DEFAULT_ALERT_SUPPRESS}  # fallback
     finally:
         conn.close()

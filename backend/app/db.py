@@ -1,6 +1,9 @@
+import logging
 import os
 import pymysql
 from pymysql.err import OperationalError
+
+logger = logging.getLogger(__name__)
 
 
 def get_mysql_connection():
@@ -15,7 +18,7 @@ def get_mysql_connection():
         )
         return conn
     except OperationalError as e:
-        print(f"MySQL connection error: {e}")
+        logger.exception("MySQL connection error")
         return None
 
 

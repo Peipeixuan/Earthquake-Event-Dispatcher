@@ -31,9 +31,11 @@ def submit_report(request: SubmitReportRequest):
         return {"message": "Event status updated"}
     raise HTTPException(status_code=404, detail="Event not found")
 
+
 @router.get("/in_process")
 def get_in_process_events(location: str = Query(..., description="Taipei / Hsinchu / Taichung / Tainan / all")):
     return fetch_in_process_events(location)
+
 
 @router.post("/repair")
 def repair_event(request: RepairEventRequest):
@@ -41,6 +43,7 @@ def repair_event(request: RepairEventRequest):
     if success:
         return {"message": "Event marked as repaired"}
     raise HTTPException(status_code=404, detail="Event not found")
+
 
 @router.get("/closed")
 def get_closed_events(location: str = Query(..., description="Taipei / Hsinchu / Taichung / Tainan / all")):
