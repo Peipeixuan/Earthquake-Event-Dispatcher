@@ -53,7 +53,7 @@ export default function AlertReport() {
     fetchClosedEvents();
   }, []);
 
-  const fetchUnacknowledged = async (region = selectedRegion) => {
+  const fetchUnacknowledged = async (region) => {
     console.log("送出的地區參數：", region);
     try {
       const response = await axiosInstance.get(API_UNACKNOWLEDGED, {params: { location: region }});
@@ -81,14 +81,17 @@ export default function AlertReport() {
       const response = await axiosInstance.post(API_ACKNOWLEDGE, { event_id: eventId });
       console.log("已接收事件:", response.data);
       alert(`✅ 已成功接收事件 ${eventId}`);
-      fetchUnacknowledged();
+
+      // 及時更新未接收與待處理
+      fetchUnacknowledged(selectedRegion);
+      fetchPendingEvents(selectedRegion);
     } catch (error) {
       console.error("接收事件失敗:", error);
       alert("接收事件失敗！");
     }
   };
 
-  const fetchPendingEvents = async (region = selectedRegion) => {
+  const fetchPendingEvents = async (region) => {
     try {
       const response = await axiosInstance.get(API_PENDING,  {params: { location: region }});
       console.log("待處理事件：", response.data);
@@ -118,14 +121,17 @@ export default function AlertReport() {
       const response = await axiosInstance.post(API_SUBMIT, payload);
       console.log("事件已送出:", response.data);
       alert(`事件 ${eventId} 已成功送出！`);
-      fetchPendingEvents();  // ⏪ 重新載入待處理清單
+
+      // 即時更新待處理與維修中
+      fetchPendingEvents(selectedRegion);
+      fetchInProgressEvents(selectedRegion);
     } catch (error) {
       console.error("事件送出失敗:", error);
       alert("事件送出失敗！");
     }
   };
 
-  const fetchInProgressEvents = async (region = selectedRegion) => {
+  const fetchInProgressEvents = async (region) => {
     try {
       const response = await axiosInstance.get(API_IN_PROGRESS, {
         params: { location: region },
@@ -151,14 +157,16 @@ export default function AlertReport() {
       console.log("已確認修復完成:", response.data);
       alert(`✅ 事件 ${eventId} 修復已確認`);
 
-      fetchInProgressEvents(); // ⏪ 重新撈取維修中資料
+      // 即時更新維修中與已完成
+      fetchInProgressEvents(selectedRegion);
+      fetchClosedEvents(selectedRegion);
     } catch (error) {
       console.error("修復確認失敗:", error);
       alert("修復確認失敗！");
     }
   };
 
-  const fetchClosedEvents = async (region = selectedRegion) => {
+  const fetchClosedEvents = async (region) => {
     try {
       const response = await axiosInstance.get(API_CLOSED, {
         params: { location: region }
