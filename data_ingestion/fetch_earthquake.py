@@ -42,7 +42,7 @@ def intensity_to_float(intensity: str) -> float:
         '6弱': 6.0,
         '6強': 6.5,
         '7級': 7.0,
-    }
+    }[intensity]
 
 
 def parse_earthquake(data) -> Earthquake:
@@ -225,14 +225,15 @@ def batch_insert_earthquake(data: List[Earthquake]):
     if not conn:
         logger.error("Failed to connect to the database.")
         return
-    logger.info(f'Inserting {len(data)} earthquakes...')
+    logger.info(f'Fetched {len(data)} earthquakes...')
     try:
         for eq in data:
             if insert_earthquake(eq, conn, alert_suppress_time):
                 logger.info(
                     f"Inserted earthquake {eq.earthquake_id} successfully.")
+        logger.info("All earthquakes inserted successfully.")
     except Exception as e:
-        logger.error(f"[ERROR] Failed to insert earthquake: {e}")
+        logger.exception(f"[ERROR] Failed to insert earthquake: {e}")
     finally:
         conn.close()
 
