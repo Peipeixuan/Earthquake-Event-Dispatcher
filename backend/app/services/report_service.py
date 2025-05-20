@@ -71,7 +71,8 @@ def acknowledge_event_by_id(event_id: str) -> bool:
             conn.commit()
             return True
     except Exception as e:
-        logger.exception(f"Acknowledge event failed")
+        logger.error("Acknowledge event failed")
+        logger.exception(e)
         return False
     finally:
         conn.close()
@@ -162,7 +163,8 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
         conn.commit()
         return True
     except Exception as e:
-        logger.exception("Failed to update event status")
+        logger.error("Failed to update event status")
+        logger.exception(e)
         return False
     finally:
         conn.close()
@@ -240,7 +242,8 @@ def mark_event_as_repaired(event_id: str):
         conn.commit()
         return True
     except Exception as e:
-        logger.exception("Failed to mark event as repaired")
+        logger.error("Failed to mark event as repaired")
+        logger.exception(e)
         return False
     finally:
         conn.close()
@@ -350,7 +353,8 @@ def auto_close_unprocessed_events():
         logger.info(f"Auto-closed {len(to_close)} events successfully")
         return len(to_close)
     except Exception as e:
-        logger.exception("Failed to auto-close events")
+        logger.error("Failed to auto-close events")
+        logger.exception(e)
         return 0
     finally:
         conn.close()

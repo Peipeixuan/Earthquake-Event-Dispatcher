@@ -157,7 +157,8 @@ def process_earthquake_and_locations(req: EarthquakeIngestRequest, alert_suppres
             return True
 
     except Exception as e:
-        logger.exception(f"Failed to insert earthquake and events")
+        logger.error("Failed to insert earthquake and events")
+        logger.exception(e)
     finally:
         conn.close()
     return False

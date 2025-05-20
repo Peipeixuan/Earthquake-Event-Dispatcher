@@ -18,7 +18,8 @@ def get_mysql_connection():
         )
         return conn
     except OperationalError as e:
-        logger.exception("MySQL connection error")
+        logger.error("MySQL connection error")
+        logger.exception(e)
         return None
 
 
