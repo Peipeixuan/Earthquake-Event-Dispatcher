@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS earthquake_location (
     id INT AUTO_INCREMENT PRIMARY KEY,
     earthquake_id INT,                     -- 對應 earthquake.id
     location VARCHAR(255),                 -- 地點名稱
-    intensity VARCHAR(20),                 -- 各地震度
+    intensity FLOAT,                       -- 各地震度
     FOREIGN KEY (earthquake_id) REFERENCES earthquake(id)
 );
 
