@@ -38,7 +38,6 @@ export default function AlertReport() {
         alert_time: new Date(item.alert_time).toLocaleString("zh-TW"),
         magnitude: parseFloat(item.magnitude).toFixed(1),
         intensity: `${parseFloat(item.intensity).toFixed(1)} 級`,
-        level: item.level === 1 ? "L1" : item.level === 2 ? "L2" : "NA"
       }));
 
       setUnacknowledgedData(formatted);
