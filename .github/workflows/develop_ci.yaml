@@ -10,43 +10,67 @@ jobs:
   docker-build:
     name: Build Dockerfile(s)
     runs-on: ubuntu-latest
+    env:
+      GCP_REGISTRY: ${{ secrets.GCP_REGION }}-docker.pkg.dev
+      GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+      GCP_REPO: ${{ secrets.GCP_REPO }}
+      BACKEND_IMAGE: backend
+      FRONTEND_IMAGE: frontend
+      INGEST_IMAGE: data_ingestion
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build backend
+      - name: Set up Docker auth to Artifact Registry
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
+
+      - name: "Use gcloud CLI"
+        run: "gcloud info"
+
+      - name: Configure Docker for GCP Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
+      - name: Build & Push backend image
         working-directory: ./backend
         run: |
-          if [ -f Dockerfile ]; then
-            docker build -t backend:test .
-          else
-            echo "No backend Dockerfile yet"
-          fi
+          IMAGE="$GCP_REGISTRY/$GCP_PROJECT/$GCP_REPO/$BACKEND_IMAGE:develop"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
 
-      - name: Build frontend
+      - name: Build & Push frontend image
         working-directory: ./frontend
         run: |
-          if [ -f Dockerfile ]; then
-            docker build -t frontend:test .
-          else
-            echo "No frontend Dockerfile yet"
-          fi
+          IMAGE="$GCP_REGISTRY/$GCP_PROJECT/$GCP_REPO/$FRONTEND_IMAGE:develop"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
 
-      - name: Build data_ingestion
+      - name: Build & Push data_ingestion
         working-directory: ./data_ingestion
         run: |
-          if [ -f Dockerfile ]; then
-            docker build -t data_ingestion:test .
-          else
-            echo "No data ingestion Dockerfile yet"
-          fi
+          IMAGE="$GCP_REGISTRY/$GCP_PROJECT/$GCP_REPO/$INGEST_IMAGE:develop"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
 
-      # - name: Run backend tests
-      #   working-directory: ./backend
-      #   run: |
-      #     pip install -r requirements.txt
-      #     PYTHONPATH=. pytest tests
+  # test:
+  #   needs: docker-build
+  #   name: Run tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #       - name: Checkout code
+  #         uses: actions/checkout@v3
+  
+        # - name: Run backend tests
+        #   working-directory: ./backend
+        #   run: |
+        #     pip install -r requirements.txt
+        #     PYTHONPATH=. pytest tests
 
-      # - name: Run frontend tests
-      #   working-directory: ./frontend
-      #   run: npm run test
+        # - name: Run frontend tests
+        #   working-directory: ./frontend
+        #   run: npm run test
