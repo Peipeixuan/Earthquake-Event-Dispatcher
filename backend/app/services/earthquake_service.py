@@ -61,7 +61,7 @@ def process_earthquake_and_locations(req: EarthquakeIngestRequest, alert_suppres
 
     conn = get_mysql_connection()
     if not conn:
-        return False
+        return 500
     try:
         with conn.cursor() as cursor:
             # === Insert earthquake ===
@@ -167,7 +167,7 @@ def process_earthquake_and_locations(req: EarthquakeIngestRequest, alert_suppres
 def fetch_all_simulated_earthquakes():
     conn = get_mysql_connection()
     if not conn:
-        return []
+        return 500
     try:
         with conn.cursor() as cursor:
             # 取出模擬地震
