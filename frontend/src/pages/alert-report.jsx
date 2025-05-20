@@ -7,35 +7,6 @@ import { API_UNACKNOWLEDGED, API_ACKNOWLEDGE, API_PENDING, API_SUBMIT, API_IN_PR
 import { useEffect, useState } from "react";
 
 
-// const mockData = {
-//   未接收: [
-//     { id: "10442-TP", eqTime: "2025/4/25, 17:20:34", alertTime: "2025/4/25, 17:21:34", magnitude: 3, level: "1" },
-//     { id: "10442-TP", eqTime: "2025/4/25, 17:20:34", alertTime: "2025/4/25, 17:21:34", magnitude: 3, level: "1" },
-//     { id: "10442-TP", eqTime: "2025/4/25, 17:20:34", alertTime: "2025/4/25, 17:21:34", magnitude: 3, level: "1" },
-//   ],
-//   待處理: [
-//     { id: "10442-TP", receiveTime: "2025/4/25, 17:20:34", alertSuccess: "否", deviceActivated: "否" },
-//     { id: "10442-TP", receiveTime: "2025/4/25, 17:20:34", alertSuccess: "否", deviceActivated: "否" },
-//   ],
-//   維修中: [
-//     { id: "10442-TP", receiveTime: "2025/4/25, 17:20:34", status: "未啟動" },
-//     { id: "10442-TP", receiveTime: "2025/4/25, 17:20:34", status: "未啟動" },
-//     { id: "10442-TP", receiveTime: "2025/4/25, 17:20:34", status: "未啟動" },
-//   ],
-//   已完成: [
-//     {
-//       id: "10442-TP", eqTime: "2025/4/25, 17:20:34", alertTime: "2025/4/25, 17:21:34",
-//       magnitude: 3, level: "1", finalLevel: "NA", receiveTime: "2025/4/25, 17:20:34",
-//       alertSuccess: "否", deviceActivated: "否", duration: "09:20:02"
-//     },
-//     {
-//       id: "10442-TP", eqTime: "2025/4/25, 17:20:34", alertTime: "2025/4/25, 17:21:34",
-//       magnitude: 3, level: "1", finalLevel: "NA", receiveTime: "2025/4/25, 17:20:34",
-//       alertSuccess: "否", deviceActivated: "否", duration: "09:20:02"
-//     },
-//   ]
-// };
-
 export default function AlertReport() {
   const navigate = useNavigate();
 
@@ -53,7 +24,7 @@ export default function AlertReport() {
     fetchClosedEvents();
   }, []);
 
-  const fetchUnacknowledged = async (region) => {
+  const fetchUnacknowledged = async (region = selectedRegion) => {
     console.log("送出的地區參數：", region);
     try {
       const response = await axiosInstance.get(API_UNACKNOWLEDGED, {params: { location: region }});
@@ -91,7 +62,7 @@ export default function AlertReport() {
     }
   };
 
-  const fetchPendingEvents = async (region) => {
+  const fetchPendingEvents = async (region = selectedRegion) => {
     try {
       const response = await axiosInstance.get(API_PENDING,  {params: { location: region }});
       console.log("待處理事件：", response.data);
@@ -131,7 +102,7 @@ export default function AlertReport() {
     }
   };
 
-  const fetchInProgressEvents = async (region) => {
+  const fetchInProgressEvents = async (region = selectedRegion) => {
     try {
       const response = await axiosInstance.get(API_IN_PROGRESS, {
         params: { location: region },
@@ -166,7 +137,7 @@ export default function AlertReport() {
     }
   };
 
-  const fetchClosedEvents = async (region) => {
+  const fetchClosedEvents = async (region = selectedRegion) => {
     try {
       const response = await axiosInstance.get(API_CLOSED, {
         params: { location: region }

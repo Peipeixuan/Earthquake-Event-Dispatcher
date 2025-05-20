@@ -13,7 +13,6 @@ location_suffix_map = {
     "Tainan": "-tn"
 }
 
-
 def fetch_unacknowledged_events(location: str):
     """ report/unacknowledged
     Fetch unacknowledged events
