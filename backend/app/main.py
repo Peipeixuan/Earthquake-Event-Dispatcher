@@ -9,7 +9,7 @@ from prometheus_client import make_asgi_app
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import earthquake, settings, report
-from backend.app.constants import DEBUG_MODE
+from app.constants import DEBUG_MODE
 
 logging.basicConfig(
     level=logging.DEBUG if DEBUG_MODE else logging.INFO,

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 from app.db import get_mysql_connection
-from backend.app.constants import DEFAULT_ALERT_SUPPRESS
+from app.constants import DEFAULT_ALERT_SUPPRESS
 
 router = APIRouter(
     prefix="/settings",
