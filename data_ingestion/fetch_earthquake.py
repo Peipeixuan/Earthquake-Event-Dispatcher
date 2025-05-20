@@ -33,6 +33,7 @@ class Earthquake(BaseModel):
 
 def intensity_to_float(intensity: str) -> float:
     return {
+        '0級': 0.0,
         '1級': 1.0,
         '2級': 2.0,
         '3級': 3.0,
@@ -56,13 +57,19 @@ def parse_earthquake(data) -> Earthquake:
         latitude=data['EarthquakeInfo']['Epicenter']['EpicenterLatitude'],
     )
 
+    areaNameMapper = {
+        '臺北市': 'Taipei',
+        '新竹市': 'Hsinchu',
+        '臺中市': 'Taichung',
+        '臺南市': 'Tainan',
+    }
+
+    # Initialize every area with level 0
+    for area in areaNameMapper.keys():
+        parsed_earthquake.intensity[areaNameMapper[area]] = intensity_to_float('0級')
+
+    # Assign each found area
     for area in data['Intensity']['ShakingArea']:
-        areaNameMapper = {
-            '臺北市': 'Taipei',
-            '新竹市': 'Hsinchu',
-            '臺中市': 'Taichung',
-            '臺南市': 'Tainan',
-        }
         county_name = area['CountyName']
         if county_name in areaNameMapper.keys():
             parsed_earthquake.intensity[areaNameMapper[county_name]
