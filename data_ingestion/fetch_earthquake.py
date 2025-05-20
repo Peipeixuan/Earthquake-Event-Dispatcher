@@ -29,7 +29,7 @@ class Earthquake(BaseModel):
     depth: float
     longitude: float
     latitude: float
-    intensity: Dict[str, str] = {}
+    intensity: Dict[str, float] = {}
 
 
 def parse_earthquake(data) -> Earthquake:
@@ -45,10 +45,10 @@ def parse_earthquake(data) -> Earthquake:
 
     for area in data['Intensity']['ShakingArea']:
         areaNameMapper = {
-            '臺北市': '臺北南港',
-            '新竹市': '新竹寶山',
-            '臺中市': '臺中大雅',
-            '臺南市': '臺南善化'
+            '臺北市': 'Taipei',
+            '新竹市': 'Hsinchu',
+            '臺中市': 'Taichung',
+            '臺南市': 'Tainan',
         }
         county_name = area['CountyName']
         if county_name in areaNameMapper.keys():
@@ -73,17 +73,17 @@ def crawl_new_earthquakes() -> List[Earthquake]:
 
 
 location_suffix_map = {
-    "臺北南港": "-tp",
-    "新竹寶山": "-hc",
-    "臺中大雅": "-tc",
-    "臺南善化": "-tn"
+    "Taipei": "-tp",
+    "Hsinchu": "-hc",
+    "Taichung": "-tc",
+    "Tainan": "-tn",
 }
 
 
-def determine_level(intensity: str, magnitude: float) -> str:
-    if intensity in ["3級", "4級", "5弱", "5強", "6弱", "6強", "7級"] or magnitude >= 5:
+def determine_level(intensity: float, magnitude: float) -> str:
+    if intensity >= 3 or magnitude >= 5:
         return 'L2'
-    elif intensity in ["1級", "2級"]:
+    elif intensity >= 1:
         return 'L1'
     else:
         return 'NA'

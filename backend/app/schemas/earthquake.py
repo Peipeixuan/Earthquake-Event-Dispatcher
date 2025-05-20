@@ -16,7 +16,7 @@ class EarthquakeIn(BaseModel):
 
 class EarthquakeLocationIn(BaseModel):
     location: str
-    intensity: str
+    intensity: float
 
 
 class EarthquakeIngestRequest(BaseModel):
@@ -35,7 +35,7 @@ class EarthquakeBaseOut(BaseModel):
 
 class EarthquakeLocationOut(BaseModel):
     location: str
-    intensity: str
+    intensity: float
 
 
 class EarthquakeSimulationOut(BaseModel):
