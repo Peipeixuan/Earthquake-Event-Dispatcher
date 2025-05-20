@@ -14,6 +14,7 @@ from app.db import get_mysql_connection
 
 logger = logging.getLogger('uvicorn')
 
+AREAS = ["Taipei", "Hsinchu", "Taichung", "Tainan"]
 UPDATE_INTERVAL = 3
 
 earthquake_time = Gauge(
@@ -28,21 +29,6 @@ earthquake_latitude = Gauge('earthquake_latitude',
                             'Latitude of the last earthquake')
 earthquake_intensity = Gauge(
     'earthquake_intensity', 'Intensity of the last earthquake by location', ['location'])
-
-
-def intensity_str_to_float(intensity: str):
-    return {
-        '0級': 0,
-        '1級': 1,
-        '2級': 2,
-        '3級': 3,
-        '4級': 4,
-        '5弱': 5,
-        '5強': 5.5,
-        '6弱': 6,
-        '6強': 6.5,
-        '7級': 7,
-    }[intensity]
 
 
 class Earthquake(BaseModel):
@@ -66,7 +52,7 @@ def update_metric(data: Earthquake):
     earthquake_longitude.set(data.longitude)
     earthquake_latitude.set(data.latitude)
 
-    for location in ["臺北南港", "新竹寶山", "臺中大雅", "臺南善化"]:
+    for location in AREAS:
         earthquake_intensity.labels(location=location).set(
             data.intensity.get(location, '0'))
 
@@ -98,14 +84,13 @@ def update_new_data():
             if result:
                 earthquake = parse_earthquake(result)
 
-                for area in ["臺北南港", "新竹寶山", "臺中大雅", "臺南善化"]:
+                for area in AREAS:
                     cursor.execute(
                         "SELECT intensity FROM earthquake_location WHERE earthquake_id = %s AND location = %s",
                         (earthquake.earthquake_id, area))
                     result = cursor.fetchone()
                     if result:
-                        earthquake.intensity[area] = intensity_str_to_float(
-                            result["intensity"])
+                        earthquake.intensity[area] = result["intensity"]
 
                 if earthquake.earthquake_id != last_earthquake.earthquake_id:
                     update_metric(earthquake)

@@ -1,19 +1,28 @@
 from datetime import datetime, timedelta
+import logging
+from typing import Optional
+from unittest.mock import DEFAULT
 from zoneinfo import ZoneInfo
+
+from pymysql import Connection
 from app.db import get_mysql_connection
+from backend.app.constants import DEFAULT_ALERT_SUPPRESS
+from backend.app.schemas.earthquake import EarthquakeIngestRequest
+
+logger = logging.getLogger(__name__)
 
 location_suffix_map = {
-    "臺北": "-tp",
-    "新竹": "-hc",
-    "臺中": "-tc",
-    "臺南": "-tn"
+    "Taipei": "-tp",
+    "Hsinchu": "-hc",
+    "Taichung": "-tc",
+    "Tainan": "-tn"
 }
 
 
-def determine_level(intensity, magnitude):
-    if intensity in ["3級", "4級", "5弱", "5強", "6弱", "6強", "7級"] or magnitude >= 5:
+def determine_level(intensity: float, magnitude: float):
+    if intensity >= 3 or magnitude >= 5:
         return 'L2'
-    elif intensity in ["1級", "2級"]:
+    elif intensity >= 1:
         return 'L1'
     else:
         return 'NA'
@@ -28,11 +37,12 @@ def get_alert_suppress_time_from_db():
             result = cursor.fetchone()
             if result:
                 return int(result["value"])
-            return 30
+            return DEFAULT_ALERT_SUPPRESS
     finally:
         conn.close()
 
-def generate_simulated_earthquake_id(conn):
+
+def generate_simulated_earthquake_id(conn: Connection) -> int:
     """
     generate ID from 100,000,000
     """
@@ -44,112 +54,120 @@ def generate_simulated_earthquake_id(conn):
         max_sim_id = result['max_id'] or 100000000
         return max_sim_id + 1
 
-def process_earthquake_and_locations(req, alert_suppress_time=None):
+
+def process_earthquake_and_locations(req: EarthquakeIngestRequest, alert_suppress_time: Optional[int] = None):
     if alert_suppress_time is None:
         alert_suppress_time = get_alert_suppress_time_from_db()
 
     conn = get_mysql_connection()
-    if conn:
-        try:
-            with conn.cursor() as cursor:
-                # === Insert earthquake ===
-                eq = req.earthquake
+    if not conn:
+        return False
+    try:
+        with conn.cursor() as cursor:
+            # === Insert earthquake ===
+            eq = req.earthquake
 
-                # generate id
-                if eq.earthquake_id is None:
-                    eq.earthquake_id = generate_simulated_earthquake_id(conn)
+            # generate id
+            if eq.earthquake_id is None:
+                eq.earthquake_id = generate_simulated_earthquake_id(conn)
 
-                eq_time_str = eq.earthquake_time.replace("T", " ")
-                eq_time = datetime.strptime(
-                    eq_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
+            eq_time_str = eq.earthquake_time.replace("T", " ")
+            eq_time = datetime.strptime(
+                eq_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
 
-                sql_insert_eq = """
-                INSERT INTO earthquake (id, earthquake_time, center, latitude, longitude, magnitude, depth, is_demo)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """
-                cursor.execute(sql_insert_eq, (
-                    eq.earthquake_id, eq_time_str, eq.center, eq.latitude, eq.longitude, eq.magnitude, eq.depth, eq.is_demo
-                ))
+            sql_insert_eq = """
+            INSERT INTO earthquake (id, earthquake_time, center, latitude, longitude, magnitude, depth, is_demo)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql_insert_eq, (
+                eq.earthquake_id, eq_time_str, eq.center, eq.latitude, eq.longitude, eq.magnitude, eq.depth, eq.is_demo
+            ))
 
-                # === Insert earthquake_location ===
-                sql_insert_loc = """
-                INSERT INTO earthquake_location (earthquake_id, location, intensity)
-                VALUES (%s, %s, %s)
-                """
-                location_ids = []
+            # === Insert earthquake_location ===
+            sql_insert_loc = """
+            INSERT INTO earthquake_location (earthquake_id, location, intensity)
+            VALUES (%s, %s, %s)
+            """
+            location_ids: list[tuple[str, int, str]] = []
 
-                for loc in req.locations:
+            for loc in req.locations:
+                cursor.execute(
+                    sql_insert_loc, (eq.earthquake_id, loc.location, loc.intensity))
+                location_ids.append(
+                    (loc.location, cursor.lastrowid, loc.intensity))
+
+            # === Insert event for each location ===
+            sql_insert_event = """
+            INSERT INTO event (id, location_eq_id, create_at, region, level, trigger_alert, ack, is_damage, is_operation_active, is_done)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+
+            for loc_name, location_eq_id, intensity in location_ids:
+                suffix: Optional[str] = None
+                for keyword, sfx in location_suffix_map.items():
+                    if keyword in loc_name:
+                        suffix = sfx
+                        break
+
+                if suffix:
+                    event_id = f"{eq.earthquake_id}{suffix}"
+                    level = determine_level(intensity, eq.magnitude)
+
+                    alert_suppress_threshold = (
+                        eq_time - timedelta(minutes=alert_suppress_time)).strftime("%Y-%m-%d %H:%M:%S")
+
+                    level_order = {"L1": 1, "L2": 2}
+                    this_level_score = level_order.get(level, 0)
+
+                    # 查詢 suppress 時間內、同地區發出的警報等級
+                    sql_check_alert = """
+                    SELECT level FROM event
+                    WHERE region = %s AND trigger_alert = 1
+                    AND create_at BETWEEN %s AND %s
+                    """
                     cursor.execute(
-                        sql_insert_loc, (eq.earthquake_id, loc.location, loc.intensity))
-                    location_ids.append(
-                        (loc.location, cursor.lastrowid, loc.intensity))
+                        sql_check_alert, (loc_name, alert_suppress_threshold, eq_time_str))
+                    past_levels = cursor.fetchall()
 
-                # === Insert event for each location ===
-                sql_insert_event = """
-                INSERT INTO event (id, location_eq_id, create_at, region, level, trigger_alert, ack, is_damage, is_operation_active, is_done)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """
+                    # 比較是否有等級 >= 本次的事件
+                    suppress = any(level_order.get(
+                        row["level"], 0) >= this_level_score for row in past_levels)
 
-                for loc_name, location_eq_id, intensity in location_ids:
-                    suffix = None
-                    for keyword, sfx in location_suffix_map.items():
-                        if keyword in loc_name:
-                            suffix = sfx
-                            break
+                    # 決定是否觸發
+                    trigger_alert = 0
+                    if level in ['L1', 'L2'] and not suppress:
+                        trigger_alert = 1
 
-                    if suffix:
-                        event_id = f"{eq.earthquake_id}{suffix}"
-                        level = determine_level(intensity, eq.magnitude)
+                    # 插入 event
+                    cursor.execute(sql_insert_event, (
+                        event_id,
+                        location_eq_id,
+                        datetime.now(ZoneInfo("Asia/Taipei")
+                                     ).strftime("%Y-%m-%d %H:%M:%S"),
+                        loc_name,  # region 填入地點名稱
+                        level,
+                        trigger_alert,
+                        False,  # ack
+                        None,  # is_damage
+                        None,  # is_operation_active
+                        False   # is_done
+                    ))
 
-                        alert_suppress_threshold = (
-                            eq_time - timedelta(minutes=alert_suppress_time)).strftime("%Y-%m-%d %H:%M:%S")
+            conn.commit()
+            return True
 
-                        level_order = {"L1": 1, "L2": 2}
-                        this_level_score = level_order.get(level, 0)
-
-                        # 查詢 suppress 時間內、同地區發出的警報等級
-                        sql_check_alert = """
-                        SELECT level FROM event
-                        WHERE region = %s AND trigger_alert = 1
-                        AND create_at BETWEEN %s AND %s
-                        """
-                        cursor.execute(sql_check_alert, (loc_name, alert_suppress_threshold, eq_time_str))
-                        past_levels = cursor.fetchall()
-
-                        # 比較是否有等級 >= 本次的事件
-                        suppress = any(level_order.get(row["level"], 0) >= this_level_score for row in past_levels)
-
-                        # 決定是否觸發
-                        trigger_alert = 0
-                        if level in ['L1', 'L2'] and not suppress:
-                            trigger_alert = 1
-
-                        # 插入 event
-                        cursor.execute(sql_insert_event, (
-                            event_id,
-                            location_eq_id,
-                            datetime.now(ZoneInfo("Asia/Taipei")
-                                         ).strftime("%Y-%m-%d %H:%M:%S"),
-                            loc_name,  # region 填入地點名稱
-                            level,
-                            trigger_alert,
-                            False,  # ack
-                            None,  # is_damage
-                            None,  # is_operation_active
-                            False   # is_done
-                        ))
-
-                conn.commit()
-                return True
-
-        except Exception as e:
-            print(f"[ERROR] Failed to insert earthquake and events: {e}")
-        finally:
-            conn.close()
+    except Exception as e:
+        logger.error("Failed to insert earthquake and events")
+        logger.exception(e)
+    finally:
+        conn.close()
     return False
+
 
 def fetch_all_simulated_earthquakes():
     conn = get_mysql_connection()
+    if not conn:
+        return []
     try:
         with conn.cursor() as cursor:
             # 取出模擬地震

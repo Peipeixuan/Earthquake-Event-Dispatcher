@@ -1,6 +1,10 @@
 from datetime import datetime, timedelta
+import logging
 from zoneinfo import ZoneInfo
+
 from app.db import get_mysql_connection
+
+logger = logging.getLogger(__name__)
 
 location_suffix_map = {
     "Taipei": "-tp",
@@ -16,9 +20,13 @@ def fetch_unacknowledged_events(location: str):
     """
     suffix = location_suffix_map.get(location)
     if not suffix and location.lower() != "all":
-        return {"message": "Invalid location"}
+        # TODO: indicate in return code
+        return []
 
     conn = get_mysql_connection()
+    if not conn:
+        # TODO indicate in return code
+        return []
     try:
         with conn.cursor() as cursor:
             sql = """
@@ -45,6 +53,8 @@ def acknowledge_event_by_id(event_id: str) -> bool:
     Acknowledge event by ID
     """
     conn = get_mysql_connection()
+    if not conn:
+        return False
     try:
         with conn.cursor() as cursor:
             # 先檢查事件是否存在
@@ -61,10 +71,12 @@ def acknowledge_event_by_id(event_id: str) -> bool:
             conn.commit()
             return True
     except Exception as e:
-        print(f"[ERROR] Acknowledge event failed: {e}")
+        logger.error("Acknowledge event failed")
+        logger.exception(e)
         return False
     finally:
         conn.close()
+
 
 def fetch_acknowledged_events(location: str):
     """ report/acknowledged
@@ -72,7 +84,8 @@ def fetch_acknowledged_events(location: str):
     """
     suffix = location_suffix_map.get(location)
     if not suffix and location.lower() != "all":
-        return {"message": "Invalid location"}
+        # TODO: indicate in return code
+        return []
 
     conn = get_mysql_connection()
     try:
@@ -95,11 +108,14 @@ def fetch_acknowledged_events(location: str):
     finally:
         conn.close()
 
+
 def update_event_status(event_id: str, damage: bool, operation_active: bool):
     """ report/submit
     Update event status
     """
     conn = get_mysql_connection()
+    if not conn:
+        return False
     try:
         with conn.cursor() as cursor:
             now = datetime.now(ZoneInfo("Asia/Taipei"))
@@ -110,10 +126,11 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
                 cursor.execute(
                     "SELECT create_at FROM event WHERE id = %s", (event_id,))
                 result = cursor.fetchone()
-                print(result)
+                logger.debug(f"Fetching event {event_id} returns: {result}")
                 if result:
                     create_at = result["create_at"]
-                    create_at = create_at.replace(tzinfo=ZoneInfo("Asia/Taipei"))
+                    create_at = create_at.replace(
+                        tzinfo=ZoneInfo("Asia/Taipei"))
                     process_minutes = int(
                         (now - create_at).total_seconds() // 60)
 
@@ -127,7 +144,8 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
                         process_time = %s
                     WHERE id = %s
                 """
-                cursor.execute(sql, (damage, operation_active, now_str, now_str, process_minutes, event_id))
+                cursor.execute(sql, (damage, operation_active,
+                               now_str, now_str, process_minutes, event_id))
             else:
                 sql = """
                     UPDATE event
@@ -136,7 +154,8 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
                         report_at = %s
                     WHERE id = %s
                 """
-                cursor.execute(sql, (damage, operation_active, now_str, event_id))
+                cursor.execute(
+                    sql, (damage, operation_active, now_str, event_id))
 
             if cursor.rowcount == 0:
                 return False
@@ -144,10 +163,12 @@ def update_event_status(event_id: str, damage: bool, operation_active: bool):
         conn.commit()
         return True
     except Exception as e:
-        print(f"[ERROR] Failed to update event status: {e}")
+        logger.error("Failed to update event status")
+        logger.exception(e)
         return False
     finally:
         conn.close()
+
 
 def fetch_in_process_events(location: str):
     """ report/in_process
@@ -155,9 +176,12 @@ def fetch_in_process_events(location: str):
     """
     suffix = location_suffix_map.get(location)
     if not suffix and location.lower() != "all":
-        return {"message": "Invalid location"}
+        # TODO: indicate in return code
+        return []
 
     conn = get_mysql_connection()
+    if not conn:
+        return []
     try:
         with conn.cursor() as cursor:
             sql = """
@@ -178,11 +202,14 @@ def fetch_in_process_events(location: str):
     finally:
         conn.close()
 
+
 def mark_event_as_repaired(event_id: str):
     """ report/repair
     Repair event by ID
     """
     conn = get_mysql_connection()
+    if not conn:
+        return False
     try:
         with conn.cursor() as cursor:
             closed_at = datetime.now(ZoneInfo("Asia/Taipei"))
@@ -200,7 +227,7 @@ def mark_event_as_repaired(event_id: str):
             cursor.execute(
                 "SELECT create_at FROM event WHERE id = %s", (event_id,))
             result = cursor.fetchone()
-            print(result)
+            logger.debug(f"Fetching event {event_id} returns: {result}")
             if result:
                 create_at = result["create_at"]
                 create_at = create_at.replace(tzinfo=ZoneInfo("Asia/Taipei"))
@@ -215,10 +242,12 @@ def mark_event_as_repaired(event_id: str):
         conn.commit()
         return True
     except Exception as e:
-        print(f"[ERROR] Failed to mark event as repaired: {e}")
+        logger.error("Failed to mark event as repaired")
+        logger.exception(e)
         return False
     finally:
         conn.close()
+
 
 def fetch_closed_events(location: str):
     """ report/closed
@@ -226,8 +255,11 @@ def fetch_closed_events(location: str):
     """
     suffix = location_suffix_map.get(location)
     if not suffix and location.lower() != "all":
-        return {"message": "Invalid location"}
+        # TODO: indicate in return code
+        return []
 
+    if not conn:
+        return []
     conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
@@ -240,7 +272,7 @@ def fetch_closed_events(location: str):
                 JOIN earthquake eq ON el.earthquake_id = eq.id
                 WHERE e.is_done = TRUE
             """
-            params = []
+            params: list[str] = []
             if suffix:
                 sql += " AND e.id LIKE %s"
                 params.append(f"%{suffix}")
@@ -257,8 +289,11 @@ def fetch_closed_events(location: str):
     finally:
         conn.close()
 
+
 def auto_close_unprocessed_events():
     conn = get_mysql_connection()
+    if not conn:
+        return 0
     try:
         with conn.cursor() as cursor:
             # 台灣現在時間
@@ -297,7 +332,7 @@ def auto_close_unprocessed_events():
             to_close_3 = cursor.fetchall()
 
             to_close = list(to_close_1) + list(to_close_2) + list(to_close_3)
-            print(to_close)
+            logger.info(f"Auto-close events: {to_close}")
 
             for row in to_close:
                 event_id = row['id']
@@ -315,10 +350,11 @@ def auto_close_unprocessed_events():
                 ))
 
         conn.commit()
-        print(f"[INFO] Auto-closed {len(to_close)}")
+        logger.info(f"Auto-closed {len(to_close)} events successfully")
         return len(to_close)
     except Exception as e:
-        print(f"[ERROR] Failed to auto-close events: {e}")
+        logger.error("Failed to auto-close events")
+        logger.exception(e)
         return 0
     finally:
         conn.close()
