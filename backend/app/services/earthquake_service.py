@@ -12,10 +12,10 @@ from backend.app.schemas.earthquake import EarthquakeIngestRequest
 logger = logging.getLogger(__name__)
 
 location_suffix_map = {
-    "臺北南港": "-tp",
-    "新竹寶山": "-hc",
-    "臺中大雅": "-tc",
-    "臺南善化": "-tn"
+    "Taipei": "-tp",
+    "Hsinchu": "-hc",
+    "Taichung": "-tc",
+    "Tainan": "-tn"
 }
 
 
