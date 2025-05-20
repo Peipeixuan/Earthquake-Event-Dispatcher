@@ -6,128 +6,12 @@ import axiosInstance from '../axiosInstance';
 import { API_SIMULATE, API_ALERT_SUPPRESS, API_SIMULATE_GET } from "../globals/constants.js";
 import { state_longtitude_lantitude } from "../globals/geo.js";
 
-// const data = [{
-//   date: "2025/04/20",
-//   time: "17:00:20",
-//   magnitude: 4,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '2級', 台中: '3級', 台南: '4級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// },
-// {
-//   date: "2025/04/20",
-//   time: "17:01:10",
-//   magnitude: 1,
-//   depth: 30,
-//   epicenter: "花蓮",
-//   intensity: { 台北: '0級', 新竹: '0級', 台中: '0級', 台南: '0級' },
-// }
-// ]
-
+const cityNameMap = {
+  "台北": "Taipei",
+  "新竹": "Hsinchu",
+  "台中": "Taichung",
+  "台南": "Tainan",
+};
 
 const getIntensityColor = (value) => {
   if (value == '0' || value == '1') return "bg-emerald-700";
@@ -194,11 +78,12 @@ export default function Simulation() {
   const handleEarthquakeChange = (field, value, city = null) => {
     if (city) {
       // 更新 intensities 裡對應城市的震度
+      const intensity = parseFloat(value);
       setEarthquakeData((prev) => ({
         ...prev,
         intensities: {
           ...prev.intensities,
-          [city]: value,
+          [city]: intensity,
         },
       }));
     } else if (field === "center") {
@@ -234,8 +119,10 @@ export default function Simulation() {
         is_demo: true,
       },
       locations: Object.entries(intensities).map(([location, intensity]) => ({
-        location,
-        intensity: intensity.replace("級", ""),
+        location: cityNameMap[location] || location,
+        // location: location,
+        // intensity: intensity.replace("級", ""),
+        intensity: intensity,
       })),
     };
 
@@ -430,7 +317,8 @@ export default function Simulation() {
                 const { earthquake, locations } = row;
                 const intensityMap = {};
                 locations.forEach(({ location, intensity }) => {
-                  intensityMap[location] = intensity;
+                  const chineseLocation = Object.keys(cityNameMap).find(city => cityNameMap[city] === location) || location;
+                  intensityMap[chineseLocation] = intensity;
                 });
 
                 return (
