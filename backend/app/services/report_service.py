@@ -13,6 +13,7 @@ location_suffix_map = {
     "Tainan": "-tn"
 }
 
+
 def fetch_unacknowledged_events(location: str):
     """ report/unacknowledged
     Fetch unacknowledged events
@@ -254,9 +255,9 @@ def fetch_closed_events(location: str):
     if not suffix and location.lower() != "all":
         return 400
 
+    conn = get_mysql_connection()
     if not conn:
         return 500
-    conn = get_mysql_connection()
     try:
         with conn.cursor() as cursor:
             sql = """
