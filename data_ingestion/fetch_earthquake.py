@@ -11,7 +11,6 @@ import logging
 
 from db import get_mysql_connection
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 API_KEY = os.getenv('API_KEY')
@@ -30,6 +29,20 @@ class Earthquake(BaseModel):
     longitude: float
     latitude: float
     intensity: Dict[str, float] = {}
+
+
+def intensity_to_float(intensity: str) -> float:
+    return {
+        '1級': 1.0,
+        '2級': 2.0,
+        '3級': 3.0,
+        '4級': 4.0,
+        '5弱': 5.0,
+        '5強': 5.5,
+        '6弱': 6.0,
+        '6強': 6.5,
+        '7級': 7.0,
+    }
 
 
 def parse_earthquake(data) -> Earthquake:
@@ -53,7 +66,7 @@ def parse_earthquake(data) -> Earthquake:
         county_name = area['CountyName']
         if county_name in areaNameMapper.keys():
             parsed_earthquake.intensity[areaNameMapper[county_name]
-                                        ] = area['AreaIntensity']
+                                        ] = intensity_to_float(area['AreaIntensity'])
 
     return parsed_earthquake
 
