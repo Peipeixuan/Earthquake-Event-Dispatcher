@@ -32,7 +32,7 @@ def test_fetch_unacknowledged_events(mock_db_connection):
 
 def test_fetch_unacknowledged_events_invalid_location(mock_db_connection):
     result = fetch_unacknowledged_events("InvalidLocation")
-    assert result == {"message": "Invalid location"}
+    assert result == 400
 
 # acknowledge_event_by_id
 def test_acknowledge_event_by_id_success(mock_db_connection):

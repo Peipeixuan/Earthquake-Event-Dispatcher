@@ -38,7 +38,7 @@ def mock_request():
     # Mock the input request object
     class MockEarthquake:
         earthquake_id = "114097"
-        earthquake_time = "2025-05-01T12:00:00"
+        earthquake_time = "2025-05-21T23:54:00"
         center = "嘉義縣政府東南東方  30.8  公里 (位於嘉義縣大埔鄉)"
         latitude = 24.5
         longitude = 121.8
@@ -54,20 +54,20 @@ def mock_request():
     class MockRequest:
         earthquake = MockEarthquake()
         locations = [
-            MockLocation("臺北南港", "1級"),
-            MockLocation("新竹寶山", "2級"),
-            MockLocation("臺中大雅", "3級"),
-            MockLocation("臺南善化", "5級")
+            MockLocation("Taipei", 1),
+            MockLocation("Hsinchu", 2),
+            MockLocation("Taichung", 3),
+            MockLocation("Tainan", 5)
         ]
 
     return MockRequest()
 
 # determine_level
 def test_determine_level():
-    assert determine_level("1級", 4.5) == "L1"
-    assert determine_level("2級", 5.0) == "L2"
-    assert determine_level("3級", 3.0) == "L2"
-    assert determine_level("0級", 3.0) == "NA"
+    assert determine_level(1, 4.5) == "L1"
+    assert determine_level(2, 5.0) == "L2"
+    assert determine_level(3, 3.0) == "L2"
+    assert determine_level(0, 3.0) == "NA"
 
 # get_alert_suppress_time_from_db
 def test_get_alert_suppress_time_from_db(mocker):
@@ -156,7 +156,7 @@ def test_fetch_all_simulated_earthquakes(mock_db_connection):
         [
             {
                 "id": 1,
-                "earthquake_time": datetime(2025, 5, 1, 12, 0, 0),
+                "earthquake_time": datetime(2025, 5, 21, 23, 54, 0),
                 "center": "嘉義縣政府東南東方  30.8  公里 (位於嘉義縣大埔鄉)",
                 "latitude": 24.5,
                 "longitude": 121.8,
@@ -166,8 +166,8 @@ def test_fetch_all_simulated_earthquakes(mock_db_connection):
             }
         ],
         [
-            {"location": "臺北南港", "intensity": "1級"},
-            {"location": "新竹寶山", "intensity": "2級"},
+            {"location": "Taipei", "intensity": 1},
+            {"location": "Hsinchu", "intensity": 2},
         ],
     ]
     
@@ -176,4 +176,4 @@ def test_fetch_all_simulated_earthquakes(mock_db_connection):
     assert len(result) == 1
     assert result[0]["earthquake"]["center"] == "嘉義縣政府東南東方  30.8  公里 (位於嘉義縣大埔鄉)"
     assert len(result[0]["locations"]) == 2
-    assert result[0]["locations"][0]["location"] == "臺北南港"
+    assert result[0]["locations"][0]["location"] == "Taipei"

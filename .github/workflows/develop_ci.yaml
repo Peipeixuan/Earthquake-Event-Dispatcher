@@ -57,19 +57,19 @@ jobs:
           docker build -t "$IMAGE" .
           docker push "$IMAGE"
 
-  # test:
-  #   needs: docker-build
-  #   name: Run tests
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #       - name: Checkout code
-  #         uses: actions/checkout@v3
+  test:
+    needs: docker-build
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
   
-        # - name: Run backend tests
-        #   working-directory: ./backend
-        #   run: |
-        #     pip install -r requirements.txt
-        #     PYTHONPATH=. pytest tests
+        - name: Run backend tests
+          working-directory: ./backend
+          run: |
+            pip install -r requirements.txt
+            PYTHONPATH=. pytest tests
 
         # - name: Run frontend tests
         #   working-directory: ./frontend
