@@ -101,10 +101,10 @@ def fetch_acknowledged_events(location: str):
             """
             if suffix:
                 sql += " AND e.id LIKE %s"
-                sql += " ORDER BY e.create_at DESC"
+                sql += " ORDER BY e.ack_time DESC"
                 cursor.execute(sql, [f"%{suffix}"])
             else:
-                sql += " ORDER BY e.create_at DESC"
+                sql += " ORDER BY e.ack_time DESC"
                 cursor.execute(sql)
 
             return cursor.fetchall()
@@ -196,10 +196,10 @@ def fetch_in_process_events(location: str):
             """
             if suffix:
                 sql += " AND e.id LIKE %s"
-                sql += " ORDER BY e.create_at DESC"
+                sql += " ORDER BY e.report_at DESC"
                 cursor.execute(sql, [f"%{suffix}"])
             else:
-                sql += " ORDER BY e.create_at DESC"
+                sql += " ORDER BY e.report_at DESC"
                 cursor.execute(sql)
 
             return cursor.fetchall()
@@ -232,11 +232,6 @@ def mark_event_as_repaired(event_id: str):
                 "SELECT create_at FROM event WHERE id = %s", (event_id,))
             result = cursor.fetchone()
             logger.debug(f"Fetching event {event_id} returns: {result}")
-            
-            if not result:
-                logger.warning(f"Event {event_id} not found. Repair failed")
-                return False
-            
             if result:
                 create_at = result["create_at"]
                 create_at = create_at.replace(tzinfo=ZoneInfo("Asia/Taipei"))
@@ -285,7 +280,7 @@ def fetch_closed_events(location: str):
                 sql += " AND e.id LIKE %s"
                 params.append(f"%{suffix}")
 
-            sql += " ORDER BY e.create_at DESC LIMIT 10"
+            sql += " ORDER BY e.closed_at DESC LIMIT 10"
             cursor.execute(sql, params)
 
             rows = cursor.fetchall()
@@ -306,7 +301,7 @@ def auto_close_unprocessed_events():
         with conn.cursor() as cursor:
             # 台灣現在時間
             now = datetime.now(ZoneInfo("Asia/Taipei"))
-            one_hour_ago = now - timedelta(minutes=1)
+            one_hour_ago = now - timedelta(hours=1)
 
             # 條件 1
             sql1 = """
@@ -339,10 +334,7 @@ def auto_close_unprocessed_events():
             cursor.execute(sql3, (one_hour_ago.strftime("%Y-%m-%d %H:%M:%S"),))
             to_close_3 = cursor.fetchall()
 
-            to_close_raw = to_close_1 + to_close_2 + to_close_3
-            unique_ids = {row["id"] for row in to_close_raw}  # 用 set 去重
-            to_close = [{"id": event_id} for event_id in unique_ids]
-            
+            to_close = list(to_close_1) + list(to_close_2) + list(to_close_3)
             logger.info(f"Auto-close events: {to_close}")
 
             for row in to_close:
