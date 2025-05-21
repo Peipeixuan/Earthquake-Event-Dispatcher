@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
@@ -37,14 +38,18 @@ def mock_db_connection(mocker):
 def mock_request():
     # Mock the input request object
     class MockEarthquake:
-        earthquake_id = "114097"
-        earthquake_time = "2025-05-21T23:54:00"
-        center = "嘉義縣政府東南東方  30.8  公里 (位於嘉義縣大埔鄉)"
-        latitude = 24.5
-        longitude = 121.8
-        magnitude = 4.5
-        depth = 10.0
-        is_demo = True
+        def __init__(self):
+            # 確保在現在時間 10 分鐘之後，避免觸發 "太早模擬" 的錯誤
+            self.earthquake_id = "114097"
+            self.earthquake_time = (
+                datetime.now(ZoneInfo("Asia/Taipei"))
+            ).strftime("%Y-%m-%dT%H:%M:%S")
+            self.center = "嘉義縣政府東南東方  30.8  公里 (位於嘉義縣大埔鄉)"
+            self.latitude = 24.5
+            self.longitude = 121.8
+            self.magnitude = 4.5
+            self.depth = 10.0
+            self.is_demo = True
 
     class MockLocation:
         def __init__(self, location, intensity):
@@ -152,11 +157,12 @@ def test_fetch_all_simulated_earthquakes(mock_db_connection):
     Test fetching all simulated earthquakes from the database.
     """
     mock_conn, mock_cursor = mock_db_connection
+    current_time = datetime.now(ZoneInfo("Asia/Taipei"))
     mock_cursor.fetchall.side_effect = [
         [
             {
                 "id": 1,
-                "earthquake_time": datetime(2025, 5, 21, 23, 54, 0),
+                "earthquake_time": current_time,
                 "center": "嘉義縣政府東南東方  30.8  公里 (位於嘉義縣大埔鄉)",
                 "latitude": 24.5,
                 "longitude": 121.8,
