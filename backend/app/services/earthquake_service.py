@@ -74,6 +74,12 @@ def process_earthquake_and_locations(req: EarthquakeIngestRequest, alert_suppres
             eq_time_str = eq.earthquake_time.replace("T", " ")
             eq_time = datetime.strptime(
                 eq_time_str, "%Y-%m-%d %H:%M:%S")  # 轉成 datetime
+            
+            # 判斷：地震時間不可早於現在時間 1 小時以前
+            eq_time = eq_time.replace(tzinfo=ZoneInfo("Asia/Taipei"))
+            if eq_time < datetime.now(ZoneInfo("Asia/Taipei")) - timedelta(hours=1):
+                logger.warning(f"Simulated earthquake time too early: {eq_time}")
+                return 400
 
             sql_insert_eq = """
             INSERT INTO earthquake (id, earthquake_time, center, latitude, longitude, magnitude, depth, is_demo)

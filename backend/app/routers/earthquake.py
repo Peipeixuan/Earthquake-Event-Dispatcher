@@ -14,6 +14,9 @@ router = APIRouter(
 @router.post("/simulate")
 def ingest_earthquake(req: EarthquakeIngestRequest):
     success = process_earthquake_and_locations(req)
+    
+    if success == 400:
+        raise HTTPException(status_code=400, detail="Cannot simulate earthquake earlier than 1 hour ago")
     if success == 500:
         raise HTTPException(status_code=500, detail="Error occurred")
     if success:
