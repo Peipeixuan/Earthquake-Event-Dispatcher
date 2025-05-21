@@ -232,6 +232,10 @@ def mark_event_as_repaired(event_id: str):
                 "SELECT create_at FROM event WHERE id = %s", (event_id,))
             result = cursor.fetchone()
             logger.debug(f"Fetching event {event_id} returns: {result}")
+            
+            if not result:
+                logger.warning(f"Event {event_id} not found. Repair failed.")
+                return False
             if result:
                 create_at = result["create_at"]
                 create_at = create_at.replace(tzinfo=ZoneInfo("Asia/Taipei"))
@@ -334,7 +338,10 @@ def auto_close_unprocessed_events():
             cursor.execute(sql3, (one_hour_ago.strftime("%Y-%m-%d %H:%M:%S"),))
             to_close_3 = cursor.fetchall()
 
-            to_close = list(to_close_1) + list(to_close_2) + list(to_close_3)
+            to_close_raw = to_close_1 + to_close_2 + to_close_3
+            unique_ids = {row["id"] for row in to_close_raw}  # 用 set 去重
+
+            to_close = [{"id": event_id} for event_id in unique_ids]
             logger.info(f"Auto-close events: {to_close}")
 
             for row in to_close:
