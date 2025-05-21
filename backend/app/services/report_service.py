@@ -37,8 +37,10 @@ def fetch_unacknowledged_events(location: str):
             """
             if suffix:
                 sql += " AND e.id LIKE %s"
+                sql += " ORDER BY e.create_at DESC"
                 cursor.execute(sql, [f"%{suffix}"])
             else:
+                sql += " ORDER BY e.create_at DESC"
                 cursor.execute(sql)
 
             return cursor.fetchall()
@@ -99,8 +101,10 @@ def fetch_acknowledged_events(location: str):
             """
             if suffix:
                 sql += " AND e.id LIKE %s"
+                sql += " ORDER BY e.create_at DESC"
                 cursor.execute(sql, [f"%{suffix}"])
             else:
+                sql += " ORDER BY e.create_at DESC"
                 cursor.execute(sql)
 
             return cursor.fetchall()
@@ -192,8 +196,10 @@ def fetch_in_process_events(location: str):
             """
             if suffix:
                 sql += " AND e.id LIKE %s"
+                sql += " ORDER BY e.create_at DESC"
                 cursor.execute(sql, [f"%{suffix}"])
             else:
+                sql += " ORDER BY e.create_at DESC"
                 cursor.execute(sql)
 
             return cursor.fetchall()
