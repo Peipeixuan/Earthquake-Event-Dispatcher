@@ -200,7 +200,6 @@ def fetch_in_process_events(location: str):
 
     try:
         with conn.cursor() as cursor:
-            now = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S")
 
             sql = """
                 SELECT e.id AS event_id, eq.earthquake_time, e.create_at AS alert_time,
@@ -291,7 +290,6 @@ def fetch_closed_events(location: str):
 
     try:
         with conn.cursor() as cursor:
-            now = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S")
 
             sql = """
                 SELECT e.id AS event_id, eq.earthquake_time, e.create_at AS alert_time,
