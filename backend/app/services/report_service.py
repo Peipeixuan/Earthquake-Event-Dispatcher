@@ -25,6 +25,9 @@ def fetch_unacknowledged_events(location: str):
     conn = get_mysql_connection()
     if not conn:
         return 500
+    
+    now = datetime.now(ZoneInfo("Asia/Taipei"))
+
     try:
         with conn.cursor() as cursor:
             sql = """
@@ -33,16 +36,17 @@ def fetch_unacknowledged_events(location: str):
                 FROM event e
                 JOIN earthquake_location el ON e.location_eq_id = el.id
                 JOIN earthquake eq ON el.earthquake_id = eq.id
-                WHERE e.ack = FALSE AND e.is_done = FALSE
+                WHERE e.ack = FALSE AND e.is_done = FALSE AND e.create_at <= %s
             """
+            params = [now.strftime("%Y-%m-%d %H:%M:%S")]
+
             if suffix:
                 sql += " AND e.id LIKE %s"
-                sql += " ORDER BY e.create_at DESC"
-                cursor.execute(sql, [f"%{suffix}"])
-            else:
-                sql += " ORDER BY e.create_at DESC"
-                cursor.execute(sql)
+                params.append(f"%{suffix}")
 
+            sql += " ORDER BY e.create_at DESC"
+
+            cursor.execute(sql, params)
             return cursor.fetchall()
     finally:
         conn.close()
@@ -89,6 +93,9 @@ def fetch_acknowledged_events(location: str):
     conn = get_mysql_connection()
     if not conn:
         return 500
+
+    now = datetime.now(ZoneInfo("Asia/Taipei"))
+
     try:
         with conn.cursor() as cursor:
             sql = """
@@ -97,16 +104,20 @@ def fetch_acknowledged_events(location: str):
                 FROM event e
                 JOIN earthquake_location el ON e.location_eq_id = el.id
                 JOIN earthquake eq ON el.earthquake_id = eq.id
-                WHERE e.ack = TRUE AND e.is_damage IS NULL AND e.is_done = FALSE
+                WHERE e.ack = TRUE 
+                  AND e.is_damage IS NULL 
+                  AND e.is_done = FALSE 
+                  AND e.ack_time <= %s
             """
+            params = [now.strftime("%Y-%m-%d %H:%M:%S")]
+
             if suffix:
                 sql += " AND e.id LIKE %s"
-                sql += " ORDER BY e.ack_time DESC"
-                cursor.execute(sql, [f"%{suffix}"])
-            else:
-                sql += " ORDER BY e.ack_time DESC"
-                cursor.execute(sql)
+                params.append(f"%{suffix}")
 
+            sql += " ORDER BY e.ack_time DESC"
+
+            cursor.execute(sql, params)
             return cursor.fetchall()
     finally:
         conn.close()
@@ -184,24 +195,31 @@ def fetch_in_process_events(location: str):
     conn = get_mysql_connection()
     if not conn:
         return 500
+    
+    now = datetime.now(ZoneInfo("Asia/Taipei"))
+
     try:
         with conn.cursor() as cursor:
+            now = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S")
+
             sql = """
                 SELECT e.id AS event_id, eq.earthquake_time, e.create_at AS alert_time,
                        eq.magnitude, el.intensity, e.level, e.region, e.ack_time, e.is_operation_active
                 FROM event e
                 JOIN earthquake_location el ON e.location_eq_id = el.id
                 JOIN earthquake eq ON el.earthquake_id = eq.id
-                WHERE e.is_damage = TRUE AND e.is_done = FALSE
+                WHERE e.is_damage = TRUE AND e.is_done = FALSE AND e.report_at <= %s
             """
+            params = [now.strftime("%Y-%m-%d %H:%M:%S")]
+
             if suffix:
                 sql += " AND e.id LIKE %s"
                 sql += " ORDER BY e.report_at DESC"
-                cursor.execute(sql, [f"%{suffix}"])
+                params.append(f"%{suffix}")
             else:
                 sql += " ORDER BY e.report_at DESC"
-                cursor.execute(sql)
 
+            cursor.execute(sql, params)
             return cursor.fetchall()
     finally:
         conn.close()
@@ -268,8 +286,13 @@ def fetch_closed_events(location: str):
     conn = get_mysql_connection()
     if not conn:
         return 500
+
+    now = datetime.now(ZoneInfo("Asia/Taipei"))
+
     try:
         with conn.cursor() as cursor:
+            now = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S")
+
             sql = """
                 SELECT e.id AS event_id, eq.earthquake_time, e.create_at AS alert_time,
                        eq.magnitude, el.intensity, e.level, e.region, 
@@ -277,9 +300,10 @@ def fetch_closed_events(location: str):
                 FROM event e
                 JOIN earthquake_location el ON e.location_eq_id = el.id
                 JOIN earthquake eq ON el.earthquake_id = eq.id
-                WHERE e.is_done = TRUE
+                WHERE e.is_done = TRUE AND e.closed_at <= %s
             """
-            params: list[str] = []
+            params = [now.strftime("%Y-%m-%d %H:%M:%S")]
+
             if suffix:
                 sql += " AND e.id LIKE %s"
                 params.append(f"%{suffix}")
