@@ -12,6 +12,8 @@ def get_mysql_connection():
             database=os.getenv("DB_NAME", ""),
             cursorclass=pymysql.cursors.DictCursor
         )
+        with conn.cursor() as cursor:
+            cursor.execute("SET time_zone = '+08:00'")
         return conn
     except pymysql.OperationalError as e:
         print(f"MySQL connection error: {e}")
