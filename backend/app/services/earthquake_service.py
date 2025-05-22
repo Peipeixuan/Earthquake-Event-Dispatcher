@@ -148,8 +148,7 @@ def process_earthquake_and_locations(req: EarthquakeIngestRequest, alert_suppres
                     cursor.execute(sql_insert_event, (
                         event_id,
                         location_eq_id,
-                        datetime.now(ZoneInfo("Asia/Taipei")
-                                     ).strftime("%Y-%m-%d %H:%M:%S"),
+                        eq_time.strftime("%Y-%m-%d %H:%M:%S"),
                         loc_name,  # region 填入地點名稱
                         level,
                         trigger_alert,
