@@ -2,6 +2,7 @@ import logging
 from app.db import check_mysql_connection
 from app.exporter import setup_exporter
 from apscheduler.schedulers.background import BackgroundScheduler
+from zoneinfo import ZoneInfo
 from app.services.report_service import auto_close_unprocessed_events
 
 from prometheus_client import make_asgi_app
@@ -31,7 +32,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(timezone=ZoneInfo("Asia/Taipei"))
 scheduler.add_job(auto_close_unprocessed_events, 'interval', minutes=1)
 scheduler.start()
 

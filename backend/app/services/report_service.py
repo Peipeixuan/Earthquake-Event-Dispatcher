@@ -338,7 +338,7 @@ def auto_close_unprocessed_events():
             cursor.execute(sql3, (one_hour_ago.strftime("%Y-%m-%d %H:%M:%S"),))
             to_close_3 = cursor.fetchall()
 
-            to_close_raw = to_close_1 + to_close_2 + to_close_3
+            to_close_raw = list(to_close_1) + list(to_close_2) + list(to_close_3)
             unique_ids = {row["id"] for row in to_close_raw}  # 用 set 去重
 
             to_close = [{"id": event_id} for event_id in unique_ids]
