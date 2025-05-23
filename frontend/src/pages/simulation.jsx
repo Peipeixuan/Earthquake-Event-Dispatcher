@@ -19,24 +19,29 @@ const getIntensityColor = (value) => {
   return "bg-red-800";
 };
 
+const getLocalDatetimeStringWithSeconds = () => {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0, 19);
+};
+
 export default function Simulation() {
 
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
-  const [seconds, setSeconds] = useState(0);
 
   const [earthquakeData, setEarthquakeData] = useState({
-    earthquake_time: "2025-04-21T17:30:02",
+    earthquake_time: getLocalDatetimeStringWithSeconds(),
     magnitude: 5,
     depth: 25,
     center: "花蓮縣",
     longitude: state_longtitude_lantitude["花蓮縣"][0],
     latitude: state_longtitude_lantitude["花蓮縣"][1],
     intensities: {
-      台北: "3級",
-      新竹: "2級",
-      台中: "4級",
-      台南: "5級",
+      台北: 0,
+      新竹: 0,
+      台中: 0,
+      台南: 0,
     },
   });
 
@@ -44,6 +49,7 @@ export default function Simulation() {
   const [simulateData, setSimulateData] = useState([]);
 
   useEffect(() => {
+    document.title = "地震模擬系統";
     fetchSimulateData();
     fetchSuppressData();
   }, []);
@@ -69,7 +75,6 @@ export default function Simulation() {
       const ss = 0; // 假設秒數為 0
       setHours(hh);
       setMinutes(mm);
-      setSeconds(ss);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -106,6 +111,15 @@ export default function Simulation() {
 
   const handleSubmitSimulate = async () => {
     const { earthquake_time, magnitude, depth, center, latitude, longitude, intensities } = earthquakeData;
+
+    // 檢查是否早於現在一小時前
+    const simulateTime = new Date(earthquake_time);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    if (simulateTime < oneHourAgo) {
+      alert("禁止模擬一小時前的地震！");
+      return; // 中止提交
+    }
   
     const payload = {
       earthquake: {
@@ -120,8 +134,6 @@ export default function Simulation() {
       },
       locations: Object.entries(intensities).map(([location, intensity]) => ({
         location: cityNameMap[location] || location,
-        // location: location,
-        // intensity: intensity.replace("級", ""),
         intensity: intensity,
       })),
     };
@@ -160,11 +172,10 @@ export default function Simulation() {
   const handleChange = (type, value) => {
     if (type === "hours") setHours(value);
     if (type === "minutes") setMinutes(value);
-    if (type === "seconds") setSeconds(value);
   };
 
   // 顯示的時間格式
-  const timeString = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  const timeString = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6 space-y-8">
@@ -177,7 +188,7 @@ export default function Simulation() {
       <select
         value={hours}
         onChange={(e) => handleChange("hours", e.target.value)}
-        className="bg-transparent text-white border-none focus:ring-0 w-10 mr-2"
+        className="bg-zinc-900 text-white px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm [&>option]:bg-zinc-800 select-scrollbar"
       >
         {[...Array(24).keys()].map((hour) => (
           <option key={hour} value={hour}>{String(hour).padStart(2, "0")}</option>
@@ -188,23 +199,13 @@ export default function Simulation() {
       <select
         value={minutes}
         onChange={(e) => handleChange("minutes", e.target.value)}
-        className="bg-transparent text-white border-none focus:ring-0 w-10 mr-2"
+        className="bg-zinc-900 text-white px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm [&>option]:bg-zinc-800 select-scrollbar"
       >
         {[...Array(60).keys()].map((minute) => (
           <option key={minute} value={minute}>{String(minute).padStart(2, "0")}</option>
         ))}
-      </select>:
-
-      {/* 秒數下拉選單 */}
-      <select
-        value={seconds}
-        onChange={(e) => handleChange("seconds", e.target.value)}
-        className="bg-transparent text-white border-none focus:ring-0 w-10 mr-4"
-      >
-        {[...Array(60).keys()].map((second) => (
-          <option key={second} value={second}>{String(second).padStart(2, "0")}</option>
-        ))}
       </select>
+
       </Input>
       <button onClick={handleSubmitSuppress} className="w-36 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded">送出</button>
 
@@ -238,7 +239,7 @@ export default function Simulation() {
             <select
               value={earthquakeData.magnitude}
               onChange={(e) => handleEarthquakeChange("magnitude", e.target.value)}
-              className="bg-transparent border-none text-white focus:ring-0"
+              className="bg-zinc-900 text-white px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm [&>option]:bg-zinc-800"
             >
               {[...Array(8).keys()].map((i) => (
                 <option key={i + 2} value={i + 2}>
@@ -260,7 +261,7 @@ export default function Simulation() {
           </Input>
           <Input title="震央">
             <select
-              className="bg-transparent border-none text-white focus:ring-0"
+              className="bg-zinc-900 text-white px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm [&>option]:bg-zinc-800 select-scrollbar"
               value={earthquakeData.center}
               onChange={(e) => handleEarthquakeChange("center", e.target.value)}
             >
@@ -277,7 +278,7 @@ export default function Simulation() {
               <select
                 value={earthquakeData.intensities[city]}
                 onChange={(e) => handleEarthquakeChange("intensity", e.target.value, city)}
-                className="bg-transparent border-none text-white focus:ring-0"
+                className="bg-zinc-900 text-white px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm [&>option]:bg-zinc-800"
               >
                 <option value="0">0級</option>
                 <option value="1">1級</option>
@@ -312,7 +313,7 @@ export default function Simulation() {
                 </div>
               </tr>
             </thead>
-            <tbody className="overflow-y-auto min-w-full block max-h-[400px]">
+            <tbody className="overflow-y-auto min-w-full block max-h-[400px] table-scrollbar">
               {simulateData.map((row, idx) => {
                 const { earthquake, locations } = row;
                 const intensityMap = {};
@@ -323,7 +324,7 @@ export default function Simulation() {
 
                 return (
                   <tr key={idx} className="bg-neutral-900 flex">
-                    <td className="w-1/6 px-4 py-2">{earthquake.earthquake_time}</td>
+                    <td className="w-1/6 px-4 py-2">{earthquake.earthquake_time.replace("T", " ")}</td>
                     <td className="w-1/6 px-4 py-2">{earthquake.magnitude}</td>
                     <td className="w-1/6 px-4 py-2">{earthquake.depth}</td>
                     <td className="w-1/6 px-4 py-2">{earthquake.center}</td>
