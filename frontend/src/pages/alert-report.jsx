@@ -10,7 +10,10 @@ import { useEffect, useState } from "react";
 export default function AlertReport() {
   const navigate = useNavigate();
 
-  const [selectedRegion, setSelectedRegion] = useState("Taipei");
+  const params = new URLSearchParams(window.location.search);
+  const initialRegion = params.get("region") || "Taipei";
+  const [selectedRegion, setSelectedRegion] = useState(initialRegion);
+
   const [unacknowledgedData, setUnacknowledgedData] = useState([]);
   const [pendingData, setPendingData] = useState([]);
   const [inProgressData, setInProgressData] = useState([]);
@@ -18,6 +21,7 @@ export default function AlertReport() {
 
 
   useEffect(() => {
+    document.title = "地震警報回報系統";
     fetchUnacknowledged();
     fetchPendingEvents();
     fetchInProgressEvents();
@@ -168,7 +172,7 @@ export default function AlertReport() {
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
       <div
-        onClick={() => navigate("/")}
+        onClick={() => window.open("http://34.81.36.176/grafana/", "_blank")}
         className="cursor-pointer text-sm text-white hover:underline mb-4"
       >
         &lt;&lt; Back To Dashboard
@@ -176,14 +180,15 @@ export default function AlertReport() {
 
       <h2 className="text-xl font-bold mb-4">Alert Report</h2>
 
-      <div className="mb-6">
+      <div className="mb-6 w-full">
         <Input title="廠區">
           <select
-            className="bg-transparent text-white border-none focus:ring-0"
+            className="bg-zinc-900 text-white px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
             value={selectedRegion}
             onChange={(e) => {
               const newRegion = e.target.value;
               setSelectedRegion(newRegion);
+              window.history.replaceState(null, "", `?region=${newRegion}`);
               fetchUnacknowledged(newRegion);
               fetchPendingEvents(newRegion);
               fetchInProgressEvents(newRegion);
@@ -265,8 +270,10 @@ function EventCard({ status, data, onAcknowledge, onSubmit,onRepairConfirm }) {
     }
   };
 
+  const [showTooltip, setShowTooltip] = useState(false);
+
   return (
-    <div className="bg-[#22252C] text-white rounded shadow-sm overflow-hidden">
+    <div className="bg-[#22252C] text-white rounded shadow-sm overflow-visible">
       <div className="bg-[#23252A] border-b border-black px-4 py-2 font-semibold">
         Event ID {data.event_id}
       </div>
@@ -303,9 +310,18 @@ function EventCard({ status, data, onAcknowledge, onSubmit,onRepairConfirm }) {
                 <input type="radio" className="accent-amber-500" name={`activate-${data.event_id}`} checked={operationActive === false} onChange={() => setOperationActive(false)}/> 否
               </label>
             </div>
-            <div>
-              <a href="#" className="text-cyan-400 text-sm">更多事件資訊</a>
-            </div>
+            <div className="relative">
+              <a href="#" className="text-cyan-400 text-sm"  onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>更多事件資訊</a>
+              {showTooltip && (
+                <div className="absolute z-10 top-6 left-0 bg-zinc-800 text-white text-xs p-2 rounded shadow-lg w-max max-w-xs border border-zinc-600">
+                  <div>地震時間：{data.earthquake_time.replace("T", " ")}</div>
+                  <div>警報時間：{data.alert_time.replace("T", " ")}</div>
+                  <div>芮氏規模：{data.magnitude}</div>
+                  <div>廠區震度：{data.intensity}</div>
+                  <div>嚴重程度：{data.level}</div>
+                </div>
+              )}
+            </div>            
           </>
         )}
 
@@ -313,9 +329,18 @@ function EventCard({ status, data, onAcknowledge, onSubmit,onRepairConfirm }) {
           <>
             <div>接收時間：{data.ackTime}</div>
             <div>戰情啟動狀態：{data.operationActivated}</div>
-            <div>
-              <a href="#" className="text-cyan-400 text-sm">更多事件資訊</a>
-            </div>
+            <div className="relative">
+              <a href="#" className="text-cyan-400 text-sm" onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}>更多事件資訊</a>
+              {showTooltip && (
+                <div className="absolute z-10 top-6 left-0 bg-zinc-800 text-white text-xs p-2 rounded shadow-lg w-max max-w-xs border border-zinc-600">
+                  <div>地震時間：{data.earthquake_time.replace("T", " ")}</div>
+                  <div>警報時間：{data.alert_time.replace("T", " ")}</div>
+                  <div>芮氏規模：{data.magnitude}</div>
+                  <div>廠區震度：{data.intensity}</div>
+                  <div>嚴重程度：{data.level}</div>
+                </div>
+              )}
+            </div> 
           </>
         )}
 

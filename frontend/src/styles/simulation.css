@@ -12,3 +12,31 @@
     right: 0;
     bottom: 0;
 }
+
+.select-scrollbar::-webkit-scrollbar {
+  overflow-y: auto;
+  width: 8px;
+}
+
+.select-scrollbar::-webkit-scrollbar-track {
+  background: 	#27272A;
+}
+
+.select-scrollbar::-webkit-scrollbar-thumb {
+  background-color: 	#71717A;
+  border-radius: 4px;
+}
+
+.table-scrollbar::-webkit-scrollbar {
+  overflow-y: auto;
+  width: 8px;
+}
+
+.table-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-scrollbar::-webkit-scrollbar-thumb {
+  background-color: 	#71717a29;
+  border-radius: 10px;
+}
