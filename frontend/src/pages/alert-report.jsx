@@ -21,7 +21,7 @@ export default function AlertReport() {
 
 
   useEffect(() => {
-    document.title = "地震警報回報系統";
+    document.title = "告警回報系統";
     fetchUnacknowledged();
     fetchPendingEvents();
     fetchInProgressEvents();
@@ -99,6 +99,7 @@ export default function AlertReport() {
       // 即時更新待處理與維修中
       fetchPendingEvents(selectedRegion);
       fetchInProgressEvents(selectedRegion);
+      fetchClosedEvents(selectedRegion);
     } catch (error) {
       console.error("事件送出失敗:", error);
       alert("事件送出失敗！");
@@ -171,12 +172,10 @@ export default function AlertReport() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div
-        onClick={() => window.open("http://34.81.36.176/grafana/", "_blank")}
-        className="cursor-pointer text-sm text-white hover:underline mb-4"
-      >
+      <a
+        href="http://34.81.36.176/grafana/d/0a4725e4-1260-4f2f-826c-d1ae7ad637f9/earthquake-event-dispatcher?orgId=1&from=now-6h&to=now&timezone=browser&var-region=$__all" className="hover:underline block mb-8">
         &lt;&lt; Back To Dashboard
-      </div>
+      </a>
 
       <h2 className="text-xl font-bold mb-4">Alert Report</h2>
 

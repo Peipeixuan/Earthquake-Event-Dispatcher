@@ -179,6 +179,11 @@ export default function Simulation() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6 space-y-8">
+      <a
+        href="http://34.81.36.176/grafana/d/0a4725e4-1260-4f2f-826c-d1ae7ad637f9/earthquake-event-dispatcher?orgId=1&from=now-6h&to=now&timezone=browser&var-region=$__all" className="hover:underline">
+        &lt;&lt; Back To Dashboard
+      </a>
+
       <h2 className="text-xl font-bold">調整警報抑制時間</h2>
       <div className="flex flex-col md:flex-row gap-4">
       {/* 調整警報抑制時間 */}
@@ -323,7 +328,7 @@ export default function Simulation() {
                 });
 
                 return (
-                  <tr key={idx} className="bg-neutral-900 flex">
+                  <tr key={idx} className="bg-neutral-900 flex border-b border-zinc-900">
                     <td className="w-1/6 px-4 py-2">{earthquake.earthquake_time.replace("T", " ")}</td>
                     <td className="w-1/6 px-4 py-2">{earthquake.magnitude}</td>
                     <td className="w-1/6 px-4 py-2">{earthquake.depth}</td>
@@ -331,7 +336,7 @@ export default function Simulation() {
                     {["台北", "新竹", "台中", "台南"].map((city) => (
                       <td
                         key={city}
-                        className={`w-1/6 px-4 py-2 ${getIntensityColor(intensityMap[city] || "0")}`}
+                        className={`w-1/6 px-4 py-2 border-r border-zinc-900 ${getIntensityColor(intensityMap[city] || "0")}`}
                       >
                         {intensityMap[city] || "0"}
                       </td>
