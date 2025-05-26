@@ -36,7 +36,7 @@ class EarthquakeBaseOut(BaseModel):
 class EarthquakeLocationOut(BaseModel):
     location: str
     intensity: float
-    level: str
+    level: int
 
 
 class EarthquakeSimulationOut(BaseModel):

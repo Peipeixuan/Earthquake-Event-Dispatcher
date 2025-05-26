@@ -199,7 +199,13 @@ def fetch_all_simulated_earthquakes():
                     WHERE earthquake_id = %s
                 """, (eq["id"],))
                 locations = cursor.fetchall()
-                logger.info(f"Fetched: {locations}")
+                level_str_to_int = {
+                    "L1": 1,
+                    "L2": 2,
+                    "NA": 0
+                }
+                for loc in locations:
+                    loc["level"] = level_str_to_int.get(loc["level"], 0)
 
                 result.append({
                     "earthquake": {
