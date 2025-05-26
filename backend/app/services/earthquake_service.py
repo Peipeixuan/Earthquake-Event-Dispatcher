@@ -8,6 +8,7 @@ from pymysql import Connection
 from app.db import get_mysql_connection
 from app.constants import DEFAULT_ALERT_SUPPRESS
 from app.schemas.earthquake import EarthquakeIngestRequest
+from app.services.report_service import close_events
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +161,9 @@ def process_earthquake_and_locations(req: EarthquakeIngestRequest, alert_suppres
                         None,  # is_operation_active
                         False   # is_done
                     ))
+
+                    if trigger_alert == 0:
+                        close_events(cursor, event_id)
 
             conn.commit()
             return True

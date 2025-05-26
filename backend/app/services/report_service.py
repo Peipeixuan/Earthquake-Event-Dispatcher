@@ -1,6 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import logging
 from zoneinfo import ZoneInfo
+
+import pymysql.cursors
 
 from app.db import get_mysql_connection
 
@@ -25,7 +27,7 @@ def fetch_unacknowledged_events(location: str):
     conn = get_mysql_connection()
     if not conn:
         return 500
-    
+
     now = datetime.now(ZoneInfo("Asia/Taipei"))
 
     try:
@@ -195,7 +197,7 @@ def fetch_in_process_events(location: str):
     conn = get_mysql_connection()
     if not conn:
         return 500
-    
+
     now = datetime.now(ZoneInfo("Asia/Taipei"))
 
     try:
@@ -249,7 +251,7 @@ def mark_event_as_repaired(event_id: str):
                 "SELECT create_at FROM event WHERE id = %s", (event_id,))
             result = cursor.fetchone()
             logger.debug(f"Fetching event {event_id} returns: {result}")
-            
+
             if not result:
                 logger.warning(f"Event {event_id} not found. Repair failed.")
                 return False
@@ -319,6 +321,32 @@ def fetch_closed_events(location: str):
         conn.close()
 
 
+def close_events(cursor: pymysql.cursors.Cursor, event_id: int | str):
+    """
+    This is to close events that have not been processed.
+    Usually called by
+    * auto_close_unprocessed_events, which close all unprocessed events past 1 hour.
+    * An event that does not trigger alert (having trigger_alert = FALSE), which will close the event immediately.
+
+    The caller should ensure that the event_id exists in the database.
+    This function will not commit the transaction, so the caller should handle the commit.
+    """
+
+    sql_update = """
+        UPDATE event
+        SET is_done = TRUE,
+            closed_at = %s,
+            process_time = %s
+        WHERE id = %s
+    """
+    now = datetime.now(ZoneInfo("Asia/Taipei"))
+    cursor.execute(sql_update, (
+        now.strftime("%Y-%m-%d %H:%M:%S"),
+        -1,  # -1 表示未處理
+        event_id
+    ))
+
+
 def auto_close_unprocessed_events():
     conn = get_mysql_connection()
     if not conn:
@@ -360,7 +388,8 @@ def auto_close_unprocessed_events():
             cursor.execute(sql3, (one_hour_ago.strftime("%Y-%m-%d %H:%M:%S"),))
             to_close_3 = cursor.fetchall()
 
-            to_close_raw = list(to_close_1) + list(to_close_2) + list(to_close_3)
+            to_close_raw = list(to_close_1) + \
+                list(to_close_2) + list(to_close_3)
             unique_ids = {row["id"] for row in to_close_raw}  # 用 set 去重
 
             to_close = [{"id": event_id} for event_id in unique_ids]
@@ -368,18 +397,7 @@ def auto_close_unprocessed_events():
 
             for row in to_close:
                 event_id = row['id']
-                sql_update = """
-                    UPDATE event
-                    SET is_done = TRUE,
-                        closed_at = %s,
-                        process_time = %s
-                    WHERE id = %s
-                """
-                cursor.execute(sql_update, (
-                    now.strftime("%Y-%m-%d %H:%M:%S"),
-                    -1,  # -1 表示未處理
-                    event_id
-                ))
+                close_events(cursor, event_id)
 
         conn.commit()
         logger.info(f"Auto-closed {len(to_close)} events successfully")
