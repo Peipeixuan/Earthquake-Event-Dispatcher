@@ -193,11 +193,13 @@ def fetch_all_simulated_earthquakes():
             result = []
             for eq in earthquakes:
                 cursor.execute("""
-                    SELECT location, intensity
-                    FROM earthquake_location
+                    SELECT el.location, el.intensity, e.level
+                    FROM earthquake_location AS el
+                    JOIN event AS e ON el.id = e.location_eq_id
                     WHERE earthquake_id = %s
                 """, (eq["id"],))
                 locations = cursor.fetchall()
+                logger.info(f"Fetched: {locations}")
 
                 result.append({
                     "earthquake": {
