@@ -13,9 +13,9 @@ const cityNameMap = {
   "台南": "Tainan",
 };
 
-const getIntensityColor = (value) => {
-  if (value == '0' || value == '1') return "bg-emerald-700";
-  if (value == '2') return "bg-amber-600";
+const getIntensityColor = (level) => {
+  if (level === 0) return "bg-emerald-700";
+  if (level === 1) return "bg-amber-600";
   return "bg-red-800";
 };
 
@@ -322,9 +322,11 @@ export default function Simulation() {
               {simulateData.map((row, idx) => {
                 const { earthquake, locations } = row;
                 const intensityMap = {};
-                locations.forEach(({ location, intensity }) => {
+                const levelMap = {};
+                locations.forEach(({ location, intensity, level }) => {
                   const chineseLocation = Object.keys(cityNameMap).find(city => cityNameMap[city] === location) || location;
                   intensityMap[chineseLocation] = intensity;
+                  levelMap[chineseLocation] = level;
                 });
 
                 return (
@@ -336,9 +338,9 @@ export default function Simulation() {
                     {["台北", "新竹", "台中", "台南"].map((city) => (
                       <td
                         key={city}
-                        className={`w-1/6 px-4 py-2 border-r border-zinc-900 ${getIntensityColor(intensityMap[city] || "0")}`}
+                        className={`w-1/6 px-4 py-2 border-r border-zinc-900 ${getIntensityColor(levelMap[city] ?? 0)}`}
                       >
-                        {intensityMap[city] || "0"}
+                        {intensityMap[city] ?? "0"}
                       </td>
                     ))}
                   </tr>
