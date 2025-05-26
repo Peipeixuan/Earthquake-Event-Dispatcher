@@ -172,8 +172,8 @@ def test_fetch_all_simulated_earthquakes(mock_db_connection):
             }
         ],
         [
-            {"location": "Taipei", "intensity": 1},
-            {"location": "Hsinchu", "intensity": 2},
+            {"location": "Taipei", "intensity": 1, "level": 1},
+            {"location": "Hsinchu", "intensity": 2, "level": 2},
         ],
     ]
     
