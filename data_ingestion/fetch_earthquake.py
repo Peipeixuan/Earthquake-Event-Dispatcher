@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import json
 from typing import Dict, List
 from zoneinfo import ZoneInfo
 from pydantic import BaseModel
@@ -66,7 +65,8 @@ def parse_earthquake(data) -> Earthquake:
 
     # Initialize every area with level 0
     for area in areaNameMapper.keys():
-        parsed_earthquake.intensity[areaNameMapper[area]] = intensity_to_float('0級')
+        parsed_earthquake.intensity[areaNameMapper[area]
+                                    ] = intensity_to_float('0級')
 
     # Assign each found area
     for area in data['Intensity']['ShakingArea']:
@@ -109,11 +109,39 @@ def determine_level(intensity: float, magnitude: float) -> str:
         return 'NA'
 
 
+def close_events(cursor: pymysql.cursors.Cursor, event_id: int | str):
+    """
+    This is to close events that have not been processed.
+    Usually called by
+    * auto_close_unprocessed_events, which close all unprocessed events past 1 hour.
+    * An event that does not trigger alert (having trigger_alert = FALSE), which will close the event immediately.
+
+    The caller should ensure that the event_id exists in the database.
+    This function will not commit the transaction, so the caller should handle the commit.
+    """
+
+    sql_update = """
+        UPDATE event
+        SET is_done = TRUE,
+            closed_at = %s,
+            process_time = %s
+        WHERE id = %s
+    """
+    now = datetime.now(ZoneInfo("Asia/Taipei"))
+    cursor.execute(sql_update, (
+        now.strftime("%Y-%m-%d %H:%M:%S"),
+        -1,  # -1 表示未處理
+        event_id
+    ))
+
+
+DEFAULT_ALERT_SUPPRESS = 30
+
+
 def get_alert_suppress_time_from_db() -> int:
     conn = get_mysql_connection()
     if not conn:
-        logger.error("Failed to connect to the database.")
-        return 30
+        return DEFAULT_ALERT_SUPPRESS
     try:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -121,12 +149,13 @@ def get_alert_suppress_time_from_db() -> int:
             result = cursor.fetchone()
             if result:
                 return int(result["value"])
-            return 30
+            return DEFAULT_ALERT_SUPPRESS
     finally:
         conn.close()
 
 
-def insert_earthquake(eq: Earthquake, conn: pymysql.Connection, alert_suppress_time: int):
+def insert_earthquake(eq: Earthquake, conn: pymysql.Connection):
+    alert_suppress_time = get_alert_suppress_time_from_db()
     with conn.cursor() as cursor:
         sql_check_eq = """
         SELECT id FROM earthquake WHERE id = %s
@@ -137,8 +166,6 @@ def insert_earthquake(eq: Earthquake, conn: pymysql.Connection, alert_suppress_t
             return False
 
         eq_time_str = eq.timestamp
-        eq_time = datetime.strptime(
-            eq_time_str, "%Y-%m-%d %H:%M:%S")
 
         sql_insert_eq = """
         INSERT INTO earthquake (id, earthquake_time, center, latitude, longitude, magnitude, depth, is_demo)
@@ -181,7 +208,9 @@ def insert_earthquake(eq: Earthquake, conn: pymysql.Connection, alert_suppress_t
             level = determine_level(intensity, eq.magnitude)
 
             alert_suppress_threshold = (
-                eq_time - timedelta(minutes=alert_suppress_time)).strftime("%Y-%m-%d %H:%M:%S")
+                datetime.strptime(eq_time_str, "%Y-%m-%d %H:%M:%S") -
+                timedelta(minutes=alert_suppress_time)
+            ).strftime("%Y-%m-%d %H:%M:%S")
 
             level_order = {"L1": 1, "L2": 2}
             this_level_score = level_order.get(level, 0)
@@ -209,8 +238,8 @@ def insert_earthquake(eq: Earthquake, conn: pymysql.Connection, alert_suppress_t
             cursor.execute(sql_insert_event, (
                 event_id,
                 location_eq_id,
-                datetime.now(ZoneInfo("Asia/Taipei")
-                             ).strftime("%Y-%m-%d %H:%M:%S"),
+                eq_time_str,  # For fetched earthquakes,
+                              # the alert time is the same as the earthquake time
                 loc_name,  # region 填入地點名稱
                 level,
                 trigger_alert,
@@ -220,14 +249,15 @@ def insert_earthquake(eq: Earthquake, conn: pymysql.Connection, alert_suppress_t
                 False   # is_done
             ))
 
+            if trigger_alert == 0:
+                close_events(cursor, event_id)
+
         conn.commit()
         return True
     return False
 
 
 def batch_insert_earthquake(data: List[Earthquake]):
-    alert_suppress_time = get_alert_suppress_time_from_db()
-
     conn = get_mysql_connection()
     if not conn:
         logger.error("Failed to connect to the database.")
@@ -235,7 +265,7 @@ def batch_insert_earthquake(data: List[Earthquake]):
     logger.info(f'Fetched {len(data)} earthquakes...')
     try:
         for eq in data:
-            if insert_earthquake(eq, conn, alert_suppress_time):
+            if insert_earthquake(eq, conn):
                 logger.info(
                     f"Inserted earthquake {eq.earthquake_id} successfully.")
         logger.info("All earthquakes inserted successfully.")
