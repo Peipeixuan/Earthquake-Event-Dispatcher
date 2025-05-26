@@ -152,9 +152,9 @@ export default function AlertReport() {
         ...item,
         earthquakeTime: new Date(item.earthquake_time).toLocaleString("zh-TW"),
         alertTime: new Date(item.alert_time).toLocaleString("zh-TW"),
-        ackTime: new Date(item.ack_time).toLocaleString("zh-TW"),
-        operationActivated: item.is_operation_active === 1 ? "已啟動" : "未啟動",
-        isDamage: item.is_damage === 1 ? "是" : "否",
+        ackTime: item.ack_time ? new Date(item.ack_time).toLocaleString("zh-TW") : "-",
+        operationActivated: item.is_operation_active == null  ? "-" : item.is_operation_active === 1 ? "已啟動" : "未啟動",
+        isDamage:  item.is_damage == null  ? "-"  : item.is_damage === 1 ? "是"  : "否",
       }));
 
       setClosedData(formatted);
