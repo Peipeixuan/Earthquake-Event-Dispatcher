@@ -6,12 +6,18 @@
 
 - **Frontend**: React 服務，提供地震模擬和警報管理界面
 - **Backend**: FastAPI 後端服務，處理 API 請求和業務邏輯
-- **Data Ingestion**: 數據擷取服務，從中央氣象局 API 獲取地震數據
-- **Database**: MySQL 8.0 數據庫
+- **Data Ingestion**: 資料擷取服務，從中央氣象局 API 獲取地震數據
+- **Database**: MySQL 8.0 資料庫
 - **Earthquake Monitoring**: Prometheus + Grafana 
 - **Reverse Proxy**: Nginx 反向代理
 
 - **System Monitoring & logging** : [See this repo](https://github.com/Peipeixuan/Earthquake-Event-Dispatcher-Monitor)
+### 系統架構圖
+![infra_overview](https://github.com/user-attachments/assets/6eaa7141-88d7-476c-b84c-f8bfb4ac62af)
+![infra_detail](https://github.com/user-attachments/assets/b5a69da8-bba3-47e7-b46e-5285ec0ad89a)
+
+### CICD 流程圖
+![cicd_flow](https://github.com/user-attachments/assets/61c6917b-3c0e-433d-8c0b-3745f6b68247)
 
 ## Quick Start
 
@@ -23,7 +29,7 @@
    cd Earthquake-Event-Dispatcher
    ```
 
-2. **配置環境變量**
+2. **配置環境變數**
    ```bash
    cp .env.example .env
    # 編輯 .env 文件，設置資料庫和其他設定
@@ -114,9 +120,3 @@ React 有兩個主要頁面：
 └── nginx.conf        # 反向代理配置
 ```
 
-### 系統架構圖
-![infra_overview](https://github.com/user-attachments/assets/6eaa7141-88d7-476c-b84c-f8bfb4ac62af)
-![infra_detail](https://github.com/user-attachments/assets/b5a69da8-bba3-47e7-b46e-5285ec0ad89a)
-
-### CICD 流程圖
-![cicd_flow](https://github.com/user-attachments/assets/61c6917b-3c0e-433d-8c0b-3745f6b68247)
